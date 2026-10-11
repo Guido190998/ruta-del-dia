@@ -183,6 +183,41 @@ body[data-vista="app"], body[data-vista="cliente"] { padding-bottom: calc(var(--
 }
 .hero-sub { font-size: 15px; color: #E3EAE6; }
 
+/* selector de día */
+.dia-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); margin-bottom: var(--e2); }
+.dia-btn {
+  display: flex; justify-content: center; align-items: center; width: 44px; height: 44px; padding: 0;
+  background: transparent; color: inherit; border: 1px solid #8FA39A; border-radius: var(--radio);
+  transition: transform 100ms ease-out;
+}
+.dia-btn:active { transform: scale(0.94); }
+.dia-fecha {
+  height: 44px; min-width: 150px; padding: 0 10px;
+  background: transparent; color: inherit; color-scheme: dark;
+  border: 1px solid #8FA39A; border-radius: var(--radio); font-size: 15px; font-weight: 600;
+}
+.dia-hoy { min-height: 44px; padding: 0 var(--e2); background: none; border: 0; color: inherit; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.cli-agenda { font-size: 13px; font-weight: 600; color: var(--tinta); }
+
+/* días de visita */
+.dias { margin: 0; padding: 0; border: 0; min-width: 0; }
+.dias legend { padding: 0; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+.dias-fila { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--e1); }
+.dia-chip { position: relative; display: block; cursor: pointer; }
+.dia-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.dia-chip span[aria-hidden] {
+  display: flex; justify-content: center; align-items: center; min-height: 48px;
+  background: var(--papel); color: var(--tinta); border: 1px solid var(--borde-campo); border-radius: var(--radio);
+  font-size: 14px; font-weight: 600; transition: background-color 120ms ease-out, color 120ms ease-out;
+}
+.dia-chip input:checked + span { background: var(--tinta); color: var(--sobre-tinta); border-color: var(--tinta); font-weight: 700; }
+.dia-chip input:focus-visible + span { outline: 3px solid var(--foco); outline-offset: 2px; }
+.fecha-fila { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.fecha-fila input { flex: 1 1 160px; width: auto; }
+.fechas { display: flex; flex-direction: column; }
+.fechas li { display: flex; justify-content: space-between; align-items: center; gap: var(--e3); border-top: 1px solid var(--linea-suave); }
+.fechas li span { font-weight: 600; }
+
 .ruta-cuerpo, .clientes-cuerpo { padding: 14px var(--e4) var(--e6); display: flex; flex-direction: column; gap: var(--e3); }
 
 .fila-titulo { display: flex; justify-content: space-between; align-items: center; gap: var(--e3); }
@@ -364,6 +399,8 @@ body[data-vista="acceso"] .aviso-cookies { position: static; margin: 0 var(--e4)
   .hero-titulo { font-size: 48px; }
   .titulo-panel { font-size: 26px; }
   .hero-sub { font-size: 16px; color: var(--texto-suave); }
+  .dia-btn, .dia-fecha { border-color: var(--borde-campo); }
+  .dia-fecha { color-scheme: light; background: var(--papel); }
   .hero :focus-visible { outline-color: var(--foco); }
 
   .ruta-cuerpo, .clientes-cuerpo { padding: var(--e5) 0 0; }

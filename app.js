@@ -19,6 +19,8 @@
     pos: null,         // última ubicación conocida del usuario
     ocupado: false,
     propuesta: null,   // punto elegido para un cliente, aún sin guardar
+    dia: hoy(),        // día cuya ruta se está viendo (AAAA-MM-DD)
+    agenda: null,      // días de visita del cliente abierto en la ficha
     acceso: 'entrar'
   };
 
@@ -40,16 +42,37 @@
     catch (e) { return new Date().toISOString().slice(0, 10); }
   }
 
-  function fechaLarga() {
+  /* Fechas como texto AAAA-MM-DD, siempre en hora local (sin saltos por zona horaria). */
+  function aFecha(dia) { var p = String(dia).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12); }
+  function aTexto(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function sumarDias(dia, n) { var d = aFecha(dia); d.setDate(d.getDate() + n); return aTexto(d); }
+  function diaSemana(dia) { return aFecha(dia).getDay(); } // 0 = domingo
+  function fechaValida(t) { return /^\d{4}-\d{2}-\d{2}$/.test(String(t)) && !isNaN(aFecha(t).getTime()); }
+  function fechaLarga(dia) {
     try {
-      var t = new Intl.DateTimeFormat('es-PE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: zona() }).format(new Date());
+      var t = new Intl.DateTimeFormat('es-PE', { weekday: 'long', day: 'numeric', month: 'long' }).format(aFecha(dia || hoy()));
       return t.charAt(0).toUpperCase() + t.slice(1);
-    } catch (e) { return 'Hoy'; }
+    } catch (e) { return String(dia || 'Hoy'); }
+  }
+  function fechaCorta(dia) {
+    try { return new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }).format(aFecha(dia)).replace(/\./g, ''); }
+    catch (e) { return String(dia); }
+  }
+
+  /* Agenda de un cliente: días fijos de la semana (0 = domingo … 6 = sábado) y fechas puntuales. */
+  var DIAS = [[1, 'Lun', 'lunes'], [2, 'Mar', 'martes'], [3, 'Mié', 'miércoles'], [4, 'Jue', 'jueves'], [5, 'Vie', 'viernes'], [6, 'Sáb', 'sábado'], [0, 'Dom', 'domingo']];
+  function diasDe(c) { return (c && Array.isArray(c.dias) ? c.dias : []).map(Number); }
+  function fechasDe(c) { return (c && Array.isArray(c.fechas) ? c.fechas : []).map(String).filter(function (f) { return fechaValida(f) && f >= hoy(); }).sort(); }
+  function tocaVisita(c, dia) { return diasDe(c).indexOf(diaSemana(dia)) >= 0 || (c && Array.isArray(c.fechas) ? c.fechas : []).map(String).indexOf(dia) >= 0; }
+  function agendados(dia) { return estado.clientes.filter(function (c) { return tocaVisita(c, dia); }); }
+  function textoAgenda(c) {
+    var d = diasDe(c), partes = DIAS.filter(function (x) { return d.indexOf(x[0]) >= 0; }).map(function (x) { return x[1]; });
+    return partes.concat(fechasDe(c).slice(0, 3).map(fechaCorta)).join(' · ');
   }
 
   function km1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
   function plural(n, uno, varios) { return n + ' ' + (n === 1 ? uno : varios); }
-  function rutaVacia() { return { fecha: hoy(), orden: [], visitados: [], modo: 'manual', tramos: null }; }
+  function rutaVacia(dia) { return { fecha: dia || hoy(), orden: [], visitados: [], modo: 'manual', tramos: null, guardada: false }; }
   function tieneUbicacion(c) { return c && typeof c.lat === 'number' && typeof c.lng === 'number'; }
   function clienteDe(id) { return estado.clientes.filter(function (c) { return c.id === id; })[0] || null; }
   function copia(o) { return JSON.parse(JSON.stringify(o)); }
@@ -111,11 +134,11 @@
 
   var datosNube = {
     clientes: function () {
-      return sb.from('clientes').select('id,nombre,direccion,referencia,lat,lng,precision_m,ubicado_en').order('nombre').then(revisar);
+      return sb.from('clientes').select('*').order('nombre').then(revisar);
     },
     guardarCliente: function (c) {
       var campos = { nombre: c.nombre, direccion: c.direccion || null, referencia: c.referencia || null };
-      ['lat', 'lng', 'precision_m', 'ubicado_en'].forEach(function (k) { if (k in c) campos[k] = c[k]; });
+      ['lat', 'lng', 'precision_m', 'ubicado_en', 'dias', 'fechas'].forEach(function (k) { if (k in c) campos[k] = c[k]; });
       var q = c.id ? sb.from('clientes').update(campos).eq('id', c.id) : sb.from('clientes').insert(campos);
       return q.select().single().then(revisar);
     },
@@ -132,6 +155,7 @@
   function datos() { return DEMO ? datosLocal : datosNube; }
 
   function guardarRuta() {
+    estado.ruta.guardada = true;
     return datos().guardarRuta(estado.ruta).catch(function () {
       avisar('No se pudo guardar el cambio. Revisa tu conexión.');
     });
@@ -411,12 +435,18 @@
     var html = '';
 
     /* cabecera */
+    var esHoy = estado.dia === hoy();
     html += '<div class="hero">';
-    html += '<p class="rotulo rotulo-hero">' + esc(fechaLarga()) + (pend.length && info.km != null ? ' · por recorrer' : '') + '</p>';
+    html += '<div class="dia-nav">' +
+      '<button type="button" class="dia-btn" data-accion="dia-paso" data-paso="-1" aria-label="Día anterior"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+      '<input type="date" class="dia-fecha" id="dia-fecha" aria-label="Fecha de la ruta" value="' + esc(estado.dia) + '">' +
+      '<button type="button" class="dia-btn" data-accion="dia-paso" data-paso="1" aria-label="Día siguiente"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>' +
+      (esHoy ? '' : '<button type="button" class="dia-hoy" data-accion="dia-hoy">Volver a hoy</button>') + '</div>';
+    html += '<p class="rotulo rotulo-hero">' + esc(fechaLarga(estado.dia)) + (esHoy ? ' · hoy' : '') + (pend.length && info.km != null ? ' · por recorrer' : '') + '</p>';
     if (!total) {
-      html += '<h2 class="hero-titulo" id="t-ruta">Ruta de hoy</h2><p class="hero-sub">Aún no marcas a quién visitas hoy.</p>';
+      html += '<h2 class="hero-titulo" id="t-ruta">' + (esHoy ? 'Ruta de hoy' : 'Ruta del día') + '</h2><p class="hero-sub">' + (esHoy ? 'Aún no hay visitas para hoy.' : 'No hay visitas agendadas para este día.') + '</p>';
     } else if (!pend.length) {
-      html += '<h2 class="hero-titulo" id="t-ruta">Ruta terminada</h2><p class="hero-sub">Visitaste a ' + (total === 1 ? 'tu cliente' : 'tus ' + total + ' clientes') + ' de hoy.</p>';
+      html += '<h2 class="hero-titulo" id="t-ruta">Ruta terminada</h2><p class="hero-sub">Visitaste a ' + (total === 1 ? 'tu cliente' : 'tus ' + total + ' clientes') + ' de este día.</p>';
     } else {
       var modoTexto = info.porCalles
         ? 'por calles' + (info.min ? ', unos ' + Math.max(1, Math.round(info.min)) + ' min manejando' : '')
@@ -433,7 +463,7 @@
 
     html += '<div class="ruta-cuerpo">';
     if (!total) {
-      html += '<p class="vacio">Elige a tus clientes de hoy y vuelve aquí para ordenar el recorrido.</p>' +
+      html += '<p class="vacio">Marca a quién visitas este día, o agenda a tus clientes en “Días de visita” para que aparezcan solos.</p>' +
         '<a class="btn btn-acento solo-celular" href="#/clientes">Elegir clientes</a>';
     } else if (pend.length) {
       var sig = pend[0], tSig = info.lista[0];
@@ -496,7 +526,7 @@
     var panel = $('#panel-clientes'), r = estado.ruta;
     var enRuta = r.orden.concat(r.visitados);
     var html = '<div class="clientes-cab"><p class="rotulo">Tus clientes · ' + estado.clientes.length + '</p>' +
-      '<h2 class="titulo-panel" id="t-clientes">¿A quién visitas hoy?</h2></div>';
+      '<h2 class="titulo-panel" id="t-clientes">' + (estado.dia === hoy() ? '¿A quién visitas hoy?' : '¿A quién visitas el ' + esc(fechaCorta(estado.dia)) + '?') + '</h2></div>';
 
     html += '<div class="clientes-cuerpo">';
     if (!estado.clientes.length) {
@@ -512,7 +542,8 @@
       html += '<li class="cli">' +
         '<label class="cli-marca"><input type="checkbox" data-accion="alternar" data-id="' + esc(c.id) + '"' + (marcado ? ' checked' : '') + '>' +
         '<span class="cli-texto"><span class="cli-nombre">' + esc(c.nombre) + '</span>' +
-        '<span class="cli-dir">' + (tieneUbicacion(c) ? esc(c.direccion || 'Con ubicación guardada') : '<span class="alerta">Sin ubicación</span>' + (c.direccion ? ' · ' + esc(c.direccion) : '')) + '</span></span></label>' +
+        '<span class="cli-dir">' + (tieneUbicacion(c) ? esc(c.direccion || 'Con ubicación guardada') : '<span class="alerta">Sin ubicación</span>' + (c.direccion ? ' · ' + esc(c.direccion) : '')) + '</span>' +
+        (textoAgenda(c) ? '<span class="cli-agenda">Visita: ' + esc(textoAgenda(c)) + '</span>' : '') + '</span></label>' +
         '<a class="cli-editar" href="#/cliente/' + esc(c.id) + '" aria-label="Ver y editar ' + esc(c.nombre) + '">Editar</a>' +
         '</li>';
     });
@@ -542,7 +573,10 @@
       '<p class="rotulo">' + (nuevo ? 'Nuevo cliente' : 'Cliente') + '</p>' +
       '<h1 class="ficha-titulo" id="t-ficha" tabindex="-1">' + (nuevo ? 'Agregar cliente' : esc(c.nombre)) + '</h1>';
 
-    var seccion = '<section class="ubicacion" id="ubic-caja" aria-labelledby="t-ubic">' + cajaUbic(nuevo ? null : c) + '</section>';
+    var cid = nuevo ? 'nuevo' : String(c.id);
+    if (!estado.agenda || estado.agenda.cid !== cid) estado.agenda = { cid: cid, dias: diasDe(c), fechas: fechasDe(c) };
+    var seccion = '<section class="ubicacion" id="ubic-caja" aria-labelledby="t-ubic">' + cajaUbic(nuevo ? null : c) + '</section>' +
+      '<section class="ubicacion" id="agenda-caja" aria-labelledby="t-agenda">' + cajaAgenda() + '</section>';
     if (!nuevo) html += seccion;
 
     html += '<form class="formulario" id="form-cliente" data-id="' + esc(nuevo ? '' : c.id) + '" novalidate>' +
@@ -557,6 +591,70 @@
 
     if (!nuevo) html += '<button type="button" class="btn-texto peligro" data-accion="eliminar-cliente" data-id="' + esc(c.id) + '">Eliminar cliente</button>';
     vista.innerHTML = html;
+  }
+
+  /* Días de visita: días fijos de la semana y fechas puntuales. Con eso el cliente aparece solo en la ruta de esos días. */
+  function cajaAgenda() {
+    var a = estado.agenda, nuevo = a.cid === 'nuevo';
+    var h = '<h2 class="rotulo" id="t-agenda">Días de visita</h2>' +
+      '<p class="ubic-texto">Marca los días fijos o agrega fechas puntuales. El cliente aparecerá solo en la ruta de esos días' + (nuevo ? '; se guarda junto con el cliente.' : '.') + '</p>' +
+      '<fieldset class="dias"><legend>Cada semana</legend><div class="dias-fila">' +
+      DIAS.map(function (d) {
+        return '<label class="dia-chip"><input type="checkbox" data-accion="dia-semana" value="' + d[0] + '"' + (a.dias.indexOf(d[0]) >= 0 ? ' checked' : '') + '>' +
+          '<span aria-hidden="true">' + d[1] + '</span><span class="oculto">' + d[2] + '</span></label>';
+      }).join('') + '</div></fieldset>' +
+      '<div class="campo"><label for="c-fecha">Una fecha puntual</label><div class="fecha-fila">' +
+      '<input type="date" id="c-fecha" min="' + hoy() + '">' +
+      '<button type="button" class="btn btn-linea" data-accion="agregar-fecha">Agregar fecha</button></div></div>';
+    if (a.fechas.length) {
+      h += '<ul class="fechas">' + a.fechas.map(function (f) {
+        return '<li><span>' + esc(fechaLarga(f)) + '</span><button type="button" class="btn-texto" data-accion="quitar-fecha" data-fecha="' + esc(f) + '" aria-label="Quitar ' + esc(fechaLarga(f)) + '">Quitar</button></li>';
+      }).join('') + '</ul>';
+    }
+    return h;
+  }
+
+  function repintarAgenda(enfocar) {
+    var caja = $('#agenda-caja');
+    if (!caja) return;
+    caja.innerHTML = cajaAgenda();
+    var el = enfocar && $(enfocar, caja); if (el) el.focus();
+  }
+
+  /* Aplica un cambio a la agenda del cliente abierto. En un cliente nuevo solo queda anotado hasta guardarlo. */
+  function cambiarAgenda(cambio, enfocar) {
+    var a = estado.agenda, antes = { dias: a.dias.slice(), fechas: a.fechas.slice() };
+    cambio(a);
+    a.dias.sort(); a.fechas.sort();
+    if (a.cid === 'nuevo') { repintarAgenda(enfocar); return; }
+    var c = clienteDe(a.cid);
+    if (!c) return;
+    var tocaba = tocaVisita(c, estado.dia);
+    repintarAgenda(enfocar);
+    datos().guardarCliente({ id: c.id, nombre: c.nombre, direccion: c.direccion, referencia: c.referencia, dias: a.dias, fechas: a.fechas })
+      .then(recargarClientes).then(function () {
+        // Si el cambio afecta al día que se está viendo, la ruta de ese día se actualiza.
+        var ahora = tocaVisita(clienteDe(a.cid), estado.dia), r = estado.ruta, id = c.id;
+        var enRuta = r.orden.indexOf(id) >= 0 || r.visitados.indexOf(id) >= 0;
+        if (!tocaba && ahora && !enRuta) { r.orden.push(id); cambioManual(); if (r.guardada) guardarRuta(); }
+        else if (tocaba && !ahora && r.orden.indexOf(id) >= 0) { r.orden = r.orden.filter(function (x) { return x !== id; }); cambioManual(); if (r.guardada) guardarRuta(); }
+        avisar('Días de visita guardados.');
+      }).catch(function (e) {
+        a.dias = antes.dias; a.fechas = antes.fechas;
+        repintarAgenda(enfocar);
+        var m = String((e && e.message) || '');
+        avisar(/dias|fechas|PGRST204|schema cache/i.test(m + ' ' + ((e && e.code) || ''))
+          ? 'Falta actualizar la base de datos: corre el archivo supabase-ruta-agenda.sql en Supabase.'
+          : 'No se pudieron guardar los días de visita. Revisa tu conexión.');
+      });
+  }
+
+  function agregarFecha() {
+    var campoFecha = $('#c-fecha'), f = campoFecha.value;
+    if (!fechaValida(f)) { avisar('Elige una fecha en el calendario.'); campoFecha.focus(); return; }
+    if (f < hoy()) { avisar('Esa fecha ya pasó. Elige una de hoy en adelante.'); campoFecha.focus(); return; }
+    if (estado.agenda.fechas.indexOf(f) >= 0) { avisar('Esa fecha ya está agendada.'); return; }
+    cambiarAgenda(function (a) { a.fechas.push(f); }, '#c-fecha');
   }
 
   /* Ubicación del local: con el GPS en el local, o con coordenadas copiadas de Google Maps.
@@ -689,8 +787,16 @@
     var p = !id && estado.propuesta && estado.propuesta.cid === 'nuevo' ? estado.propuesta : null;
     if (id) c.id = id;
     if (p) { c.lat = p.lat; c.lng = p.lng; c.precision_m = p.precision || null; c.ubicado_en = new Date().toISOString(); }
+    var ag = !id && estado.agenda && estado.agenda.cid === 'nuevo' ? estado.agenda : null;
+    if (ag && (ag.dias.length || ag.fechas.length)) { c.dias = ag.dias; c.fechas = ag.fechas; }
     datos().guardarCliente(c).then(function (guardado) {
       return recargarClientes().then(function () {
+        if (!id) {
+          estado.agenda = null;
+          // Si al cliente nuevo le toca visita el día que se está viendo, entra a esa ruta.
+          var creado = clienteDe(guardado.id), r = estado.ruta;
+          if (creado && tocaVisita(creado, estado.dia) && r.orden.indexOf(creado.id) < 0) { r.orden.push(creado.id); cambioManual(); if (r.guardada) guardarRuta(); }
+        }
         if (id) { avisar('Cambios guardados.'); pintarFicha(id); }
         else if (p) { estado.propuesta = null; avisar('Cliente guardado con su ubicación.'); location.hash = '#/clientes'; }
         else { avisar('Cliente guardado sin ubicación. Irá al final de la ruta hasta que la guardes.'); location.hash = '#/cliente/' + guardado.id; }
@@ -856,6 +962,7 @@
     if (h.indexOf('#/') !== 0) h = '#/ruta'; // enlaces de Supabase u otros
     var partes = h.slice(2).split('/');
     estado.propuesta = null; // un punto propuesto y no guardado se descarta al cambiar de pantalla
+    estado.agenda = null;
     if (partes[0] === 'cliente' && partes[1]) {
       pintarFicha(partes[1]);
       if (!clienteDe(partes[1]) && partes[1] !== 'nuevo') return;
@@ -888,19 +995,36 @@
     });
   }
 
-  function cargarTodo() {
-    return recargarClientes().then(function () { return datos().ruta(hoy()); }).then(function (r) {
-      var ruta = rutaVacia();
+  /* Ruta de un día: la que ya se guardó; si no hay, los clientes agendados para ese día. */
+  function cargarRuta(dia) {
+    return datos().ruta(dia).then(function (r) {
+      var ruta = rutaVacia(dia);
       if (r) {
         var existe = function (id) { return !!clienteDe(id); };
         ruta.orden = (r.orden || []).filter(existe);
         ruta.visitados = (r.visitados || []).filter(existe);
         ruta.modo = r.modo || 'manual';
         ruta.tramos = r.tramos || null;
+        ruta.guardada = true;
+      } else {
+        ruta.orden = agendados(dia).map(function (c) { return c.id; });
       }
+      estado.dia = dia;
       estado.ruta = ruta;
       estado.previa = null;
     });
+  }
+
+  function cargarTodo() {
+    return recargarClientes().then(function () { return cargarRuta(estado.dia); });
+  }
+
+  function cambiarDia(dia) {
+    if (!fechaValida(dia) || dia === estado.dia || estado.ocupado) { pintarRuta(); return; }
+    cargarRuta(dia).then(function () {
+      pintarApp();
+      var campoDia = $('#dia-fecha'); if (campoDia) campoDia.focus();
+    }).catch(function () { pintarRuta(); avisar('No se pudo cargar ese día. Revisa tu conexión.'); });
   }
 
   function entrar(usuario) {
@@ -934,6 +1058,10 @@
     else if (accion === 'bajar') mover(id, 1);
     else if (accion === 'guardar-ubicacion') guardarUbicacion(id, el);
     else if (accion === 'eliminar-cliente') eliminarCliente(id);
+    else if (accion === 'dia-paso') cambiarDia(sumarDias(estado.dia, Number(el.getAttribute('data-paso'))));
+    else if (accion === 'dia-hoy') cambiarDia(hoy());
+    else if (accion === 'agregar-fecha') agregarFecha();
+    else if (accion === 'quitar-fecha') { var quitar = el.getAttribute('data-fecha'); cambiarAgenda(function (a) { a.fechas = a.fechas.filter(function (f) { return f !== quitar; }); }, '#c-fecha'); }
     else if (accion === 'ver-dir') verDireccion();
     else if (accion === 'usar-coords') usarCoordenadas(id);
     else if (accion === 'ubicar-nuevo') ubicarNuevo(el);
@@ -952,6 +1080,11 @@
       alternarCliente(id, el.checked);
       var nuevo = $('input[data-accion="alternar"][data-id="' + id + '"]');
       if (nuevo) nuevo.focus();
+    } else if (el.id === 'dia-fecha') {
+      cambiarDia(el.value);
+    } else if (el.matches && el.matches('input[data-accion="dia-semana"]')) {
+      var n = Number(el.value), marcado = el.checked;
+      cambiarAgenda(function (a) { a.dias = a.dias.filter(function (d) { return d !== n; }); if (marcado) a.dias.push(n); }, 'input[data-accion="dia-semana"][value="' + n + '"]');
     }
   });
 
