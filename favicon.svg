@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ruta del día">
+  <rect width="64" height="64" rx="14" fill="#10231C"/>
+  <path d="M20 46 V30 a10 10 0 0 1 10 -10 h4 a10 10 0 0 1 10 10 v2" fill="none" stroke="#D7F25A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="46" r="6" fill="#D7F25A"/>
+  <circle cx="44" cy="40" r="6" fill="#FFFFFF"/>
+</svg>
