@@ -692,9 +692,12 @@
     if (/Invalid login credentials/i.test(m)) return 'Correo o contraseña incorrectos.';
     if (/Email not confirmed/i.test(m)) return 'Aún no confirmas tu correo. Revisa tu bandeja y abre el enlace.';
     if (/already registered/i.test(m)) return 'Ese correo ya tiene una cuenta. Entra o recupera tu contraseña.';
-    if (/rate limit|too many/i.test(m)) return 'Demasiados intentos. Espera unos minutos y vuelve a probar.';
+    if (/signups? not allowed|signup.*disabled/i.test(m)) return 'El registro desde la app está cerrado. Pide tu cuenta al administrador.';
+    if (/rate limit|too many/i.test(m)) return 'Supabase llegó a su límite de correos por hora. Espera un rato o pide tu cuenta al administrador.';
+    if (/sending.*email|confirmation email/i.test(m)) return 'No se pudo enviar el correo de confirmación. Pide tu cuenta al administrador.';
     if (/password/i.test(m) && /least|short|weak/i.test(m)) return 'La contraseña es muy corta o débil. Usa al menos 8 caracteres.';
-    return 'No se pudo completar. Revisa tu conexión e inténtalo otra vez.';
+    if (/failed to fetch|network/i.test(m)) return 'No se pudo conectar. Revisa tu conexión e inténtalo otra vez.';
+    return 'No se pudo completar.' + (m ? ' Detalle: ' + m : ' Revisa tu conexión e inténtalo otra vez.');
   }
 
   function enviarAcceso(form) {
@@ -888,7 +891,9 @@
       return;
     }
     cargarScript(CDN_SUPABASE).then(function () {
-      sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { db: { schema: CFG.ESQUEMA || 'ruta' } });
+      // Tolera que la dirección se haya pegado con /rest/v1/ al final
+      var urlBase = String(CFG.SUPABASE_URL).trim().replace(/\/(rest|auth)\/v1\/?$/, '').replace(/\/+$/, '');
+      sb = window.supabase.createClient(urlBase, CFG.SUPABASE_ANON_KEY, { db: { schema: CFG.ESQUEMA || 'ruta' } });
       sb.auth.onAuthStateChange(function (evento, sesion) {
         // Fuera del callback para no bloquear a Supabase
         setTimeout(function () {
