@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://ruta-del-dia.vercel.app/sitemap.xml
+Sitemap: https://ruta-del-dia-ochre.vercel.app/sitemap.xml
