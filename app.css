@@ -253,6 +253,14 @@ body[data-vista="app"], body[data-vista="cliente"] { padding-bottom: calc(var(--
 .ubic-datos dt { color: var(--gris); }
 .ubic-datos dd { font-weight: 600; text-align: right; }
 .ubic-botones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e4); }
+.ubic-texto strong { color: var(--tinta); }
+.rotulo-sub { margin-top: var(--e2); }
+.pasos { counter-reset: paso; display: flex; flex-direction: column; gap: var(--e4); }
+.pasos li { counter-increment: paso; position: relative; padding-left: 36px; display: flex; flex-direction: column; align-items: flex-start; gap: var(--e2); color: var(--texto-suave); }
+.pasos li::before { content: counter(paso); position: absolute; left: 0; top: -2px; font-family: var(--titulos); font-weight: 800; font-size: 26px; line-height: 1; color: var(--tinta); }
+.pasos .campo { width: 100%; }
+.pasos .campo label { color: var(--tinta); }
+.pasos .btn, .ubic-botones .btn { max-width: 100%; }
 
 .formulario { display: flex; flex-direction: column; gap: 14px; }
 .campo label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }

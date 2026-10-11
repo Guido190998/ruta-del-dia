@@ -18,6 +18,7 @@
     previa: null,      // copia de la ruta antes de ordenar, para "Deshacer"
     pos: null,         // última ubicación conocida del usuario
     ocupado: false,
+    propuesta: null,   // punto elegido para un cliente, aún sin guardar
     acceso: 'entrar'
   };
 
@@ -541,34 +542,128 @@
       '<p class="rotulo">' + (nuevo ? 'Nuevo cliente' : 'Cliente') + '</p>' +
       '<h1 class="ficha-titulo" id="t-ficha" tabindex="-1">' + (nuevo ? 'Agregar cliente' : esc(c.nombre)) + '</h1>';
 
-    if (!nuevo) {
-      html += '<section class="ubicacion" aria-labelledby="t-ubic">' +
-        '<h2 class="rotulo" id="t-ubic">Ubicación</h2>';
-      if (conUbic) {
-        html += '<dl class="ubic-datos">' +
-          '<div><dt>Coordenadas</dt><dd>' + c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + '</dd></div>' +
-          (c.precision_m ? '<div><dt>Precisión del GPS</dt><dd>' + c.precision_m + ' m</dd></div>' : '') +
-          '</dl>' +
-          '<div class="ubic-botones"><button type="button" class="btn btn-linea" data-accion="guardar-ubicacion" data-id="' + esc(c.id) + '">Tomarla de nuevo</button>' +
-          '<a class="enlace" href="https://www.google.com/maps/search/?api=1&query=' + c.lat + ',' + c.lng + '" target="_blank" rel="noopener">Verla en Google Maps</a></div>';
-      } else {
-        html += '<p class="ubic-texto">Este cliente aún no tiene ubicación. Guárdala cuando estés en la puerta del local: se hace una sola vez y desde ahí la ruta lo ordena solo.</p>' +
-          '<button type="button" class="btn btn-acento" data-accion="guardar-ubicacion" data-id="' + esc(c.id) + '">Guardar mi ubicación actual</button>';
-      }
-      html += '</section>';
-    }
+    var seccion = '<section class="ubicacion" id="ubic-caja" aria-labelledby="t-ubic">' + cajaUbic(nuevo ? null : c) + '</section>';
+    if (!nuevo) html += seccion;
 
     html += '<form class="formulario" id="form-cliente" data-id="' + esc(nuevo ? '' : c.id) + '" novalidate>' +
       (nuevo ? '' : '<h2 class="rotulo">Datos</h2>') +
       campo('nombre', 'Nombre del negocio', c.nombre, 'text', 'required maxlength="80" autocomplete="off"') +
-      campo('direccion', 'Dirección', c.direccion, 'text', 'maxlength="120" autocomplete="off"', 'Opcional. Sirve para abrirla en Google Maps mientras no tenga ubicación.') +
+      campo('direccion', 'Dirección', c.direccion, 'text', 'maxlength="120" autocomplete="off"', 'Con distrito. Sirve para buscar el local en Google Maps.') +
       campo('referencia', 'Referencia', c.referencia, 'text', 'maxlength="120" autocomplete="off"', 'Opcional. Por ejemplo: frente al mercado.') +
+      (nuevo ? seccion : '') +
       '<p class="error" id="error-cliente" role="alert" hidden></p>' +
       '<button type="submit" class="btn ' + (nuevo || conUbic ? 'btn-acento' : 'btn-fuerte') + '">' + (nuevo ? 'Guardar cliente' : 'Guardar cambios') + '</button>' +
       '</form>';
 
     if (!nuevo) html += '<button type="button" class="btn-texto peligro" data-accion="eliminar-cliente" data-id="' + esc(c.id) + '">Eliminar cliente</button>';
     vista.innerHTML = html;
+  }
+
+  /* Ubicación del local: con el GPS en el local, o con coordenadas copiadas de Google Maps.
+     El punto siempre se puede comprobar en Google Maps antes de guardarlo.
+     c = null cuando el cliente todavía se está creando. */
+  function cajaUbic(c) {
+    var nuevo = !c, id = nuevo ? 'nuevo' : c.id, conUbic = tieneUbicacion(c);
+    var p = estado.propuesta && estado.propuesta.cid === String(id) ? estado.propuesta : null;
+    var h = '<h2 class="rotulo" id="t-ubic">Ubicación del local</h2>';
+    if (p) {
+      var ver = '<a class="btn btn-linea" href="https://www.google.com/maps/search/?api=1&query=' + p.lat + ',' + p.lng + '" target="_blank" rel="noopener">Ver este punto en Google Maps</a>';
+      var datosPunto = '<dl class="ubic-datos"><div><dt>Coordenadas</dt><dd>' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5) + '</dd></div>' +
+        (p.precision ? '<div><dt>Precisión del GPS</dt><dd>' + p.precision + ' m</dd></div>' : '') + '</dl>';
+      if (nuevo) {
+        return h + '<p class="ubic-texto"><strong>Ubicación lista.</strong> Ábrela en Google Maps y confirma que cae en el local. Se guarda junto con el cliente.</p>' + datosPunto +
+          '<div class="ubic-botones">' + ver + '<button type="button" class="btn-texto" data-accion="descartar-punto" data-id="nuevo">Cambiar la ubicación</button></div>';
+      }
+      return h + '<p class="ubic-texto"><strong>Punto propuesto, aún sin guardar.</strong> Ábrelo en Google Maps y confirma que cae en el local.</p>' + datosPunto +
+        '<div class="ubic-botones">' + ver + '</div>' +
+        '<div class="ubic-botones"><button type="button" class="btn ' + (conUbic ? 'btn-fuerte' : 'btn-acento') + '" data-accion="guardar-punto" data-id="' + esc(id) + '">Guardar este punto</button>' +
+        '<button type="button" class="btn-texto" data-accion="descartar-punto" data-id="' + esc(id) + '">No es correcto</button></div>';
+    }
+    if (conUbic) {
+      h += '<dl class="ubic-datos">' +
+        '<div><dt>Coordenadas</dt><dd>' + c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + '</dd></div>' +
+        '<div><dt>Origen</dt><dd>' + (c.precision_m ? 'GPS, con ' + c.precision_m + ' m de precisión' : 'Coordenadas de Google Maps') + '</dd></div>' +
+        '</dl>' +
+        '<div class="ubic-botones"><a class="btn btn-linea" href="https://www.google.com/maps/search/?api=1&query=' + c.lat + ',' + c.lng + '" target="_blank" rel="noopener">Ver el punto guardado en Google Maps</a>' +
+        '<button type="button" class="btn-texto" data-accion="guardar-ubicacion" data-id="' + esc(id) + '">Tomarla de nuevo con el GPS</button></div>';
+    } else {
+      h += '<p class="ubic-texto">' + (nuevo
+          ? 'Déjala confirmada desde ahora para que la ruta ordene a este cliente. Sin ubicación, irá al final de la ruta.'
+          : 'Aún sin ubicación: este cliente va al final de la ruta hasta que la guardes.') + '</p>' +
+        '<div class="ubic-botones"><button type="button" class="btn btn-fuerte" data-accion="' + (nuevo ? 'ubicar-nuevo' : 'guardar-ubicacion') + '" data-id="' + esc(id) + '">Estoy en el local: ' + (nuevo ? 'usar' : 'guardar') + ' mi ubicación</button></div>';
+    }
+    return h + '<h3 class="rotulo rotulo-sub">Si no estás en el local</h3>' +
+      '<ol class="pasos">' +
+      '<li><span>Busca el local en Google Maps.</span>' +
+      '<button type="button" class="btn btn-linea" data-accion="ver-dir">Buscar en Google Maps</button></li>' +
+      '<li><span>Copia sus coordenadas. En computadora: clic derecho sobre el local y clic en los números. En celular: mantén el dedo sobre el local y copia los números que aparecen.</span></li>' +
+      '<li><div class="campo"><label for="c-coords">Pega aquí las coordenadas</label>' +
+      '<input id="c-coords" type="text" autocomplete="off" placeholder="-12.0464, -77.0428"></div>' +
+      '<button type="button" class="btn btn-linea" data-accion="usar-coords" data-id="' + esc(id) + '">Usar estas coordenadas</button></li></ol>';
+  }
+
+  function repintarUbic(id) {
+    var caja = $('#ubic-caja');
+    if (!caja) return;
+    caja.innerHTML = cajaUbic(id === 'nuevo' ? null : clienteDe(id));
+  }
+
+  /* Acepta "-12.0464, -77.0428" o un enlace de Google Maps que traiga las coordenadas. */
+  function leerCoordenadas(texto) {
+    var t = String(texto || '').trim();
+    var m = t.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/) || t.match(/(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/);
+    if (!m) return null;
+    var lat = Number(m[1]), lng = Number(m[2]);
+    if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return null;
+    return { lat: lat, lng: lng };
+  }
+
+  function usarCoordenadas(id) {
+    var campoCoords = $('#c-coords'), c = leerCoordenadas(campoCoords.value);
+    if (!c) {
+      avisar('No reconozco esas coordenadas. Deben verse así: -12.0464, -77.0428');
+      campoCoords.setAttribute('aria-invalid', 'true');
+      campoCoords.focus();
+      return;
+    }
+    estado.propuesta = { cid: String(id), lat: c.lat, lng: c.lng, precision: null };
+    repintarUbic(id);
+  }
+
+  function ubicarNuevo(boton) {
+    var texto = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = 'Buscando tu ubicación…';
+    ubicar(true).then(function (p) {
+      estado.pos = p;
+      estado.propuesta = { cid: 'nuevo', lat: p.lat, lng: p.lng, precision: p.precision };
+      repintarUbic('nuevo');
+      if (p.precision > PRECISION_BAJA_M) avisar('Poca precisión del GPS (' + p.precision + ' m). Comprueba el punto en Google Maps.');
+    }).catch(function (e) { boton.disabled = false; boton.textContent = texto; avisar(e.message); });
+  }
+
+  function guardarPunto(id, boton) {
+    var p = estado.propuesta, c = clienteDe(id);
+    if (!p || !c) return;
+    boton.disabled = true;
+    boton.textContent = 'Guardando…';
+    datos().guardarCliente({ id: id, nombre: c.nombre, direccion: c.direccion, referencia: c.referencia,
+      lat: p.lat, lng: p.lng, precision_m: p.precision || null, ubicado_en: new Date().toISOString() })
+      .then(recargarClientes).then(function () {
+        estado.propuesta = null;
+        repintarUbic(id);
+        avisar('Ubicación guardada.');
+      }).catch(function () {
+        boton.disabled = false;
+        boton.textContent = 'Guardar este punto';
+        avisar('No se pudo guardar la ubicación. Revisa tu conexión.');
+      });
+  }
+
+  function verDireccion() {
+    var campoDir = $('#c-direccion'), dir = campoDir ? campoDir.value.trim() : '';
+    if (!dir) { avisar('Escribe primero la dirección.'); if (campoDir) campoDir.focus(); return; }
+    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(dir), '_blank', 'noopener');
   }
 
   function campo(nombre, etiqueta, valor, tipo, extras, ayuda) {
@@ -591,11 +686,14 @@
     var boton = $('button[type="submit"]', form);
     boton.disabled = true;
     var c = { nombre: nombre, direccion: form.direccion.value.trim(), referencia: form.referencia.value.trim() };
+    var p = !id && estado.propuesta && estado.propuesta.cid === 'nuevo' ? estado.propuesta : null;
     if (id) c.id = id;
+    if (p) { c.lat = p.lat; c.lng = p.lng; c.precision_m = p.precision || null; c.ubicado_en = new Date().toISOString(); }
     datos().guardarCliente(c).then(function (guardado) {
       return recargarClientes().then(function () {
         if (id) { avisar('Cambios guardados.'); pintarFicha(id); }
-        else { avisar('Cliente guardado. Si estás en su local, guarda su ubicación.'); location.hash = '#/cliente/' + guardado.id; }
+        else if (p) { estado.propuesta = null; avisar('Cliente guardado con su ubicación.'); location.hash = '#/clientes'; }
+        else { avisar('Cliente guardado sin ubicación. Irá al final de la ruta hasta que la guardes.'); location.hash = '#/cliente/' + guardado.id; }
       });
     }).catch(function () {
       boton.disabled = false;
@@ -614,7 +712,8 @@
         lat: p.lat, lng: p.lng, precision_m: p.precision, ubicado_en: new Date().toISOString() }).then(function () { return p; });
     }).then(function (p) {
       return recargarClientes().then(function () {
-        pintarFicha(id);
+        estado.propuesta = null;
+        repintarUbic(id);
         avisar(p.precision > PRECISION_BAJA_M
           ? 'Ubicación guardada, pero con poca precisión (' + p.precision + ' m). Si puedes, tómala de nuevo en la puerta del local.'
           : 'Ubicación guardada.');
@@ -756,6 +855,7 @@
     var h = location.hash || '#/ruta';
     if (h.indexOf('#/') !== 0) h = '#/ruta'; // enlaces de Supabase u otros
     var partes = h.slice(2).split('/');
+    estado.propuesta = null; // un punto propuesto y no guardado se descarta al cambiar de pantalla
     if (partes[0] === 'cliente' && partes[1]) {
       pintarFicha(partes[1]);
       if (!clienteDe(partes[1]) && partes[1] !== 'nuevo') return;
@@ -834,6 +934,11 @@
     else if (accion === 'bajar') mover(id, 1);
     else if (accion === 'guardar-ubicacion') guardarUbicacion(id, el);
     else if (accion === 'eliminar-cliente') eliminarCliente(id);
+    else if (accion === 'ver-dir') verDireccion();
+    else if (accion === 'usar-coords') usarCoordenadas(id);
+    else if (accion === 'ubicar-nuevo') ubicarNuevo(el);
+    else if (accion === 'guardar-punto') guardarPunto(id, el);
+    else if (accion === 'descartar-punto') { estado.propuesta = null; repintarUbic(id); }
     else if (accion === 'modo-acceso') { pintarAcceso(el.getAttribute('data-modo')); var t = $('#t-acceso'); if (t) t.focus(); }
     else if (accion === 'salir') salir();
     else if (accion === 'recargar') location.reload();
@@ -855,7 +960,15 @@
     else if (ev.target.id === 'form-acceso') { ev.preventDefault(); enviarAcceso(ev.target); }
   });
 
-  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('#toast').hidden) ocultarToast(); });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !$('#toast').hidden) ocultarToast();
+    // Enter en el campo de coordenadas las usa; no envía el formulario.
+    if (ev.key === 'Enter' && ev.target.id === 'c-coords') {
+      ev.preventDefault();
+      var boton = $('[data-accion="usar-coords"]'); if (boton) boton.click();
+    }
+  });
+  document.addEventListener('input', function (ev) { if (ev.target.id === 'c-coords') ev.target.removeAttribute('aria-invalid'); });
   window.addEventListener('hashchange', navegar);
 
   /* ---------- arranque ---------- */
