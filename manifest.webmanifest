@@ -3,7 +3,6 @@
   "short_name": "Ruta del día",
   "description": "Ordena tus visitas del día por la ruta más corta.",
   "lang": "es-PE",
-  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#EEF1EC",

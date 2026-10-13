@@ -48,13 +48,11 @@
 
 <header class="cab">
   <div class="cab-in">
-    <a class="marca" href="#/ruta">Ruta del día</a>
-    <nav class="tabs" id="tabs" aria-label="Secciones" hidden>
-      <a href="#/ruta" data-tab="ruta">Ruta de hoy</a>
-      <a href="#/clientes" data-tab="clientes">Clientes</a>
-    </nav>
+    <a class="marca" id="marca" href="#/">Ruta del día</a>
+    <nav class="tabs" id="tabs" aria-label="Secciones" hidden></nav>
     <div class="cuenta" id="cuenta" hidden>
       <span class="cuenta-correo" id="cuenta-correo"></span>
+      <button type="button" class="btn-cab" id="mi-clave" data-accion="mi-clave">Mi contraseña</button>
       <button type="button" class="btn-cab" data-accion="salir">Salir</button>
     </div>
   </div>
@@ -76,6 +74,8 @@
   </div>
 
   <section class="ficha" id="vista-cliente" hidden></section>
+
+  <section class="pagina" id="vista-pagina" hidden></section>
 </main>
 
 <footer class="pie">

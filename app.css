@@ -376,6 +376,76 @@ body[data-vista="acceso"] .aviso-cookies { position: static; margin: 0 var(--e4)
 .perdida { align-items: flex-start; padding-top: var(--e8); }
 .perdida .codigo { font-family: var(--titulos); font-weight: 800; font-size: 96px; line-height: 0.9; }
 
+/* ---------- multiempresa: marca, roles, horarios y paneles ---------- */
+
+.tabs[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tabs[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.marca { gap: var(--e2); }
+.logo { flex: none; width: 44px; height: 44px; border-radius: 10px; object-fit: contain; background: var(--papel); }
+.logo-letras { display: inline-flex; align-items: center; justify-content: center; background: var(--acento); color: var(--tinta); font-family: var(--titulos); font-weight: 800; font-size: 15px; }
+.logo-chico { width: 32px; height: 32px; border-radius: 8px; font-size: 12px; }
+.logo-grande { width: 64px; height: 64px; border-radius: 16px; font-size: 20px; }
+.nota-ingreso { display: flex; flex-direction: column; gap: 6px; padding: var(--e3); background: var(--fondo); border-radius: var(--radio); font-size: 14px; color: var(--texto-suave); }
+.selector { width: 100%; height: 48px; padding: 0 var(--e3); background: var(--papel); border: 1px solid var(--borde-campo); border-radius: var(--radio); font-size: 16px; }
+.filtro-cli { margin-bottom: var(--e3); }
+.cli-ajeno { padding: var(--e3) 0; }
+
+.horario { display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: var(--e2); align-items: center; }
+.horario-dia { font-weight: 600; font-size: 15px; }
+.horario input { width: 100%; height: 44px; padding: 0 var(--e2); background: var(--papel); border: 1px solid var(--borde-campo); border-radius: var(--radio); font-size: 15px; }
+.campo input[type="number"] { max-width: 140px; }
+
+.fuera { margin-top: var(--e5); display: flex; flex-direction: column; gap: var(--e2); }
+.fuera-lista { display: flex; flex-direction: column; gap: var(--e2); }
+.fuera-item { display: flex; flex-direction: column; gap: 6px; padding: var(--e3) var(--e4); background: #FDF1D8; border: 1px solid #E8C67A; border-radius: var(--radio-caja); color: #5E3D00; }
+.fuera-item strong { color: var(--tinta); }
+.fuera-botones { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e1); }
+.fuera-botones .btn { min-height: 44px; font-size: 15px; }
+.fuera-espera { font-weight: 600; }
+
+.pagina { padding-bottom: var(--e7); }
+.pagina-in { max-width: 1120px; margin: 0 auto; padding: var(--e5) var(--e4) var(--e7); display: flex; flex-direction: column; gap: var(--e4); }
+.columnas { display: flex; flex-wrap: wrap; gap: var(--e6); align-items: flex-start; }
+.col-ancha { flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.col-lateral { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.col-lateral h2, .tarjeta h2, .titulo-panel { font-family: var(--titulos); font-weight: 700; font-size: 22px; line-height: 1.15; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--e3); }
+.tarjeta-persona { gap: var(--e2); }
+.cifra-persona { color: var(--texto-suave); }
+.cifra-persona b { font-family: var(--titulos); font-size: 32px; color: var(--tinta); margin-right: 4px; }
+.barrita { height: 8px; border-radius: 4px; background: var(--linea-suave); overflow: hidden; }
+.barrita i { display: block; width: 0; height: 100%; background: var(--tinta); }
+.ok { color: #1F5C46; font-weight: 700; }
+.pedido { display: flex; flex-direction: column; gap: 6px; padding-top: var(--e3); border-top: 1px solid var(--linea-suave); }
+.dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.previo { padding: var(--e3); background: #DCEBDF; border-radius: var(--radio); }
+.previo-usuario { font-family: var(--titulos); font-weight: 800; font-size: 26px; overflow-wrap: anywhere; }
+.cred { display: flex; flex-direction: column; gap: var(--e2); padding: var(--e4); background: #DCEBDF; border-radius: var(--radio-caja); }
+.cred dl { display: flex; flex-direction: column; gap: 6px; }
+.cred dl div { display: flex; flex-wrap: wrap; gap: 2px var(--e3); }
+.cred dt { min-width: 150px; color: var(--gris); font-size: 14px; }
+.cred dd { font-weight: 700; overflow-wrap: anywhere; }
+.etiqueta-alerta { align-self: flex-start; margin-top: 4px; padding: 2px 8px; border-radius: 6px; background: #F6DFDB; color: var(--peligro); font-size: 12px; font-weight: 700; }
+.persona { flex-wrap: wrap; gap: var(--e2); padding: var(--e3) 0; }
+.quitar-caja { display: flex; flex-direction: column; gap: 6px; flex: 1 1 260px; }
+.muestra { flex: none; display: inline-flex; justify-content: flex-end; width: 36px; height: 36px; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea); margin-right: var(--e3); }
+.muestra i { display: block; width: 12px; height: 100%; }
+.cifras { display: flex; flex-wrap: wrap; border-top: 2px solid var(--tinta); border-bottom: 1px solid var(--linea); }
+.cifras > div { flex: 1 1 160px; padding: var(--e4) var(--e4) var(--e4) 0; display: flex; flex-direction: column; gap: 4px; }
+.cifras span { font-size: 13px; font-weight: 600; color: var(--gris); }
+.cifras strong { font-family: var(--titulos); font-weight: 800; font-size: 34px; line-height: 1; }
+.encabezado-empresa { display: flex; align-items: center; gap: var(--e3); }
+.color { width: 88px; height: 48px; padding: 4px; border: 1px solid var(--borde-campo); border-radius: var(--radio); background: var(--papel); }
+.previa { max-width: 320px; border: 1px solid var(--linea); border-radius: 20px; overflow: hidden; background: var(--fondo); }
+.previa-cab { display: flex; align-items: center; gap: var(--e2); padding: var(--e3); color: #FFFFFF; font-family: var(--titulos); }
+.previa-cuerpo { display: flex; flex-direction: column; gap: var(--e3); padding: var(--e4); }
+.previa-boton { min-height: 48px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+@media (max-width: 959px) { #mi-clave { display: none; } }
+@media (min-width: 960px) {
+  .pagina-in { padding: var(--e7) var(--e6) var(--e8); }
+  .tabs[data-n] { display: flex; }
+}
+
 /* ---------- pantallas anchas ---------- */
 
 @media (min-width: 960px) {

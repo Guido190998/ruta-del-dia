@@ -39,6 +39,8 @@ async function sesionValida(token) {
   }
 }
 
+function minutos(x) { return typeof x === 'number' && isFinite(x) && x >= 0 && x <= 2880 ? Math.round(x) : null; }
+
 function leerRespuesta(datos, paradas) {
   const ruta = datos && datos.routes && datos.routes[0];
   if (!ruta || !Array.isArray(ruta.steps)) return null;
@@ -62,6 +64,8 @@ function leerRespuesta(datos, paradas) {
       tramo.min = Math.max(0, (paso.duration - durPrev) / 60);
       durPrev = paso.duration;
     }
+    // Hora de llegada (minutos desde la medianoche) cuando se pidieron horarios.
+    if (typeof paso.arrival === 'number') tramo.llegada = paso.arrival / 60;
     tramos[parada.id] = tramo;
   });
   if (!orden.length) return null;
@@ -102,10 +106,23 @@ module.exports = async function optimizar(req, res) {
     return res.status(400).json({ error: 'datos' });
   }
 
+  // Horarios (opcionales): salida y ventana de atención en minutos desde la medianoche; servicio = minutos de visita.
+  const salida = minutos(cuerpo.salida);
+  const conHorario = salida != null;
   const pedido = {
-    jobs: paradas.map((p, i) => ({ id: i + 1, location: [p.lng, p.lat] })),
+    jobs: paradas.map((p, i) => {
+      const job = { id: i + 1, location: [p.lng, p.lat] };
+      if (conHorario) {
+        const serv = minutos(p.servicio);
+        if (serv) job.service = serv * 60;
+        const v = Array.isArray(p.ventana) ? p.ventana.map(minutos) : null;
+        if (v && v[0] != null && v[1] != null && v[1] > v[0]) job.time_windows = [[v[0] * 60, v[1] * 60]];
+      }
+      return job;
+    }),
     // Sin "end": la ruta termina en la última visita.
-    vehicles: [{ id: 1, profile: 'driving-car', start: [origen.lng, origen.lat] }],
+    vehicles: [Object.assign({ id: 1, profile: 'driving-car', start: [origen.lng, origen.lat] },
+      conHorario ? { time_window: [salida * 60, 2 * 24 * 3600] } : {})],
     options: { g: true }
   };
 
