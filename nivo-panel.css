@@ -3,7 +3,7 @@
 @font-face{font-family:"Manrope Fallback";src:local("Arial");size-adjust:104%;ascent-override:96%;descent-override:27%;line-gap-override:0%}
 /* !important: la app pinta colores de marca en la raíz; en el panel general mandan los de Nivo. */
 html.nivo{
-  --tinta:#0F2747 !important; --acento:#4FAF7C !important; --sobre-acento:#0F2747;
+  --tinta:#0F2747 !important; --acento:#4FAF7C !important; --sobre-acento:#0F2747 !important;
   --fondo:#F4F1EA; --linea:#E3DED2; --linea-suave:#ECE8DE; --gris:#4A5B6C; --foco:#1E4B73;
   --titulos:"Manrope","Manrope Fallback",system-ui,sans-serif; --cuerpo:"Manrope","Manrope Fallback",system-ui,-apple-system,"Segoe UI",sans-serif;
 }

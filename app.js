@@ -1200,7 +1200,7 @@
     estado.acceso = modo;
     var vista = $('#vista-acceso'), pub = estado.pub;
     var intro = '<div class="acceso-texto">' + (pub ? logoDe(pub, 'logo-grande') : '') +
-      '<p class="rotulo">' + (pub ? esc(pub.nombre) + ' · Ruta del día' : 'Ruta del día') + '</p>' +
+      '<p class="rotulo">' + (pub ? esc(pub.nombre) + ' · Ruta del día' : SLUG ? 'Ruta del día' : 'Nivo Ruta · panel general') + '</p>' +
       '<h1>' + (pub ? 'Tu ruta, en orden y a tiempo' : 'Las rutas de tu equipo, en orden y a tiempo') + '</h1>' +
       '<p>La app arma el recorrido por calles desde donde estás, respetando el horario de cada cliente.</p></div>';
     var form;
