@@ -1,0 +1,15 @@
+/* Nivo · panel general de Nivo Ruta (/panel). Todo va dentro de html.nivo:
+   las empresas y sus transportistas conservan su diseño. */
+@font-face{font-family:"Manrope Fallback";src:local("Arial");size-adjust:104%;ascent-override:96%;descent-override:27%;line-gap-override:0%}
+/* !important: la app pinta colores de marca en la raíz; en el panel general mandan los de Nivo. */
+html.nivo{
+  --tinta:#0F2747 !important; --acento:#4FAF7C !important; --sobre-acento:#0F2747;
+  --fondo:#F4F1EA; --linea:#E3DED2; --linea-suave:#ECE8DE; --gris:#4A5B6C; --foco:#1E4B73;
+  --titulos:"Manrope","Manrope Fallback",system-ui,sans-serif; --cuerpo:"Manrope","Manrope Fallback",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+html.nivo .cab{border-bottom:3px solid var(--acento)}
+html.nivo .marca{display:inline-flex;align-items:center;gap:10px}
+html.nivo .nivo-simbolo{width:40px;height:30px;flex:none}
+html.nivo .marca b{font-weight:800;letter-spacing:.04em;font-size:20px}
+html.nivo .nivo-chip{font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;background:var(--acento);color:#0F2747}
+html.nivo h1,html.nivo h2,html.nivo h3{letter-spacing:-.01em}

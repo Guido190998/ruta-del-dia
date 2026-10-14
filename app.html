@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruta del día | Ordena tus visitas por la ruta más corta</title>
+<meta name="description" content="Marca a qué clientes visitas hoy y Ruta del día ordena las paradas por calles, desde donde estás. Abre el recorrido en Google Maps con un toque.">
+<link rel="canonical" href="https://ruta-del-dia-ochre.vercel.app/">
+<meta name="theme-color" content="#10231C">
+<meta name="color-scheme" content="light">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_PE">
+<meta property="og:site_name" content="Ruta del día">
+<meta property="og:title" content="Ruta del día: ordena tus visitas por la ruta más corta">
+<meta property="og:description" content="Marca a quién visitas hoy y la app ordena las paradas por calles, desde donde estás.">
+<meta property="og:url" content="https://ruta-del-dia-ochre.vercel.app/">
+<meta property="og:image" content="https://ruta-del-dia-ochre.vercel.app/vista-previa.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ruta del día: una lista de visitas numeradas y los kilómetros por recorrer">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icono-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&family=Manrope:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/nivo-panel.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Ruta del día",
+  "url": "https://ruta-del-dia-ochre.vercel.app/",
+  "description": "App para vendedores en ruta: ordena las visitas del día por calles, desde la ubicación actual.",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Android, iOS, Windows, macOS",
+  "inLanguage": "es-PE"
+}
+</script>
+</head>
+<body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<header class="cab">
+  <div class="cab-in">
+    <a class="marca" id="marca" href="#/">Ruta del día</a>
+    <nav class="tabs" id="tabs" aria-label="Secciones" hidden></nav>
+    <div class="cuenta" id="cuenta" hidden>
+      <span class="cuenta-correo" id="cuenta-correo"></span>
+      <button type="button" class="btn-cab" id="mi-clave" data-accion="mi-clave">Mi contraseña</button>
+      <button type="button" class="btn-cab" data-accion="salir">Salir</button>
+    </div>
+  </div>
+</header>
+
+<p class="aviso-demo" id="aviso-demo" hidden>Modo de prueba: los datos se guardan solo en este dispositivo.</p>
+
+<main id="contenido" tabindex="-1">
+  <section class="carga" id="vista-carga" aria-live="polite">
+    <p>Cargando tu ruta…</p>
+  </section>
+
+  <section class="acceso" id="vista-acceso" hidden></section>
+
+  <div class="app" id="vista-app" hidden>
+    <h1 class="oculto">Ruta del día</h1>
+    <section class="panel panel-clientes" id="panel-clientes" aria-labelledby="t-clientes"></section>
+    <section class="panel panel-ruta" id="panel-ruta" aria-labelledby="t-ruta"></section>
+  </div>
+
+  <section class="ficha" id="vista-cliente" hidden></section>
+
+  <section class="pagina" id="vista-pagina" hidden></section>
+</main>
+
+<footer class="pie">
+  <nav aria-label="Información legal">
+    <a href="/privacidad">Privacidad</a>
+    <a href="/terminos">Términos</a>
+    <a href="/cookies">Cookies</a>
+    <a href="/aviso-legal">Aviso legal</a>
+    <a id="enlace-soporte" href="#" hidden target="_blank" rel="noopener">Soporte por WhatsApp</a>
+  </nav>
+  <p class="creditos">Rutas por calles: openrouteservice.org by HeiGIT. Datos de mapa © colaboradores de OpenStreetMap.</p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toast-texto"></span>
+  <button type="button" id="toast-accion" hidden></button>
+</div>
+
+<dialog class="dialogo" id="dialogo" aria-labelledby="dialogo-titulo">
+  <form method="dialog">
+    <h2 id="dialogo-titulo"></h2>
+    <p id="dialogo-texto"></p>
+    <div class="dialogo-botones">
+      <button type="submit" value="no" class="btn btn-linea">Cancelar</button>
+      <button type="submit" value="si" class="btn btn-peligro" id="dialogo-si">Eliminar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="aviso-cookies" id="aviso-cookies" role="region" aria-label="Aviso de almacenamiento" hidden>
+  <p>Solo guardamos en tu dispositivo lo necesario para mantener tu sesión. No usamos cookies de publicidad. <a href="/cookies">Ver detalle</a></p>
+  <button type="button" class="btn btn-linea" data-accion="aceptar-aviso">Entendido</button>
+</div>
+
+<noscript>
+  <p class="sin-js">Ruta del día necesita JavaScript para funcionar. Actívalo en tu navegador y vuelve a cargar la página.</p>
+</noscript>
+
+<script src="/config.js"></script>
+<script src="/orden.js"></script>
+<script src="/app.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

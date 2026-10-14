@@ -58,7 +58,11 @@
   "rewrites": [
     {
       "source": "/:x((?!api$|panel$)[a-z0-9]+(?:-[a-z0-9]+)*)",
-      "destination": "/"
+      "destination": "/app"
+    },
+    {
+      "source": "/panel",
+      "destination": "/app"
     }
   ]
 }

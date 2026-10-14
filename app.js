@@ -13,6 +13,13 @@
     var s = (location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || '').toLowerCase();
     return s && RESERVADAS.indexOf(s) < 0 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) ? s : '';
   })();
+  // Panel general (/panel): marca Nivo. Las empresas y sus transportistas conservan su diseño.
+  var NIVO_MARCA = '<svg class="nivo-simbolo" viewBox="0 0 106 80" aria-hidden="true"><rect x="0" y="42" width="40" height="38" rx="6" fill="#F4F1EA"/><rect x="34" y="22" width="36" height="58" rx="6" fill="#BFD9D2"/><path d="M34 40 L34 80 L70 80 Z" fill="#081A30"/><rect x="70" y="0" width="36" height="80" rx="8" fill="#4FAF7C"/><path d="M70 29 L70 80 L106 80 Z" fill="#081A30" opacity=".75"/></svg><b>NIVO</b><span class="nivo-chip">Ruta</span>';
+  if (!SLUG) {
+    document.documentElement.classList.add('nivo');
+    var icoNivo = document.querySelector('link[rel="icon"]'); if (icoNivo) icoNivo.href = '/nivo-icono.svg';
+    var marcaNivo = document.getElementById('marca'); if (marcaNivo) { marcaNivo.innerHTML = NIVO_MARCA; marcaNivo.setAttribute('aria-label', 'Nivo Ruta · panel general'); }
+  }
   var VELOCIDAD_KMH = 25;    // para estimar horas cuando no hay cálculo por calles
   var MAX_PARADAS_MAPS = 10; // Google Maps admite 9 paradas intermedias en un enlace
   var PRECISION_BAJA_M = 60;
@@ -1621,7 +1628,7 @@
         aplicarMarca(s.empresa);
         return (esAdmin() ? cargarEquipo() : Promise.resolve()).then(cargarTodo).then(function () { pintarTabs(); navegar(); });
       }
-      if (s.admin) { aplicarMarca({ nombre: 'Ruta del día · panel general' }); pintarTabs(); navegar(); return; }
+      if (s.admin) { $('#marca').innerHTML = NIVO_MARCA; $('#marca').setAttribute('aria-label', 'Nivo Ruta · panel general'); pintarTabs(); navegar(); return; }
       if (s.empresas.length === 1) { location.replace('/' + s.empresas[0].slug); return; }
       if (s.empresas.length > 1) {
         pintarMensaje('Elige la empresa', 'Tu cuenta trabaja en más de una empresa:</p><ul class="lista-clientes">' + s.empresas.map(function (e) {
@@ -1692,7 +1699,7 @@
       var na = claveTemporal(), correoA = el.getAttribute('data-correo');
       el.disabled = true;
       cuentas('restablecer_superadmin', { correo: correoA, clave: na }).then(function () {
-        estado.cred = { vista: 'admins', html: credencial('Nueva contraseña de administrador', [['Panel', location.origin + '/'], ['Correo', correoA], ['Contraseña temporal', na]]) };
+        estado.cred = { vista: 'admins', html: credencial('Nueva contraseña de administrador', [['Panel', location.origin + '/panel'], ['Correo', correoA], ['Contraseña temporal', na]]) };
         pintarGeneral('admins');
       }).catch(function (e) { el.disabled = false; avisar(e.message); });
       return true;
@@ -1745,7 +1752,7 @@
       var claveA = form.clave.value;
       cuentas('crear_superadmin', { correo: form.correo.value, clave: claveA }).then(function (r) {
         estado.cred = { vista: 'admins', html: r.existente ? '<p class="cred">' + esc(r.correo) + ' ya tenía cuenta: ahora también es administrador general.</p>'
-          : credencial('Administrador agregado', [['Panel', location.origin + '/'], ['Correo', r.correo], ['Contraseña temporal', claveA]]) };
+          : credencial('Administrador agregado', [['Panel', location.origin + '/panel'], ['Correo', r.correo], ['Contraseña temporal', claveA]]) };
         estado.general.admins = null; pintarGeneral('admins'); return cargarGeneral('admins');
       }).catch(function (e) { fallar('#error-admin', e.message); });
       return true;

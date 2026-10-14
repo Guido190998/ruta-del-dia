@@ -2,121 +2,106 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta del día | Ordena tus visitas por la ruta más corta</title>
-<meta name="description" content="Marca a qué clientes visitas hoy y Ruta del día ordena las paradas por calles, desde donde estás. Abre el recorrido en Google Maps con un toque.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nivo Ruta · Rutas de visita con horarios</title>
+<meta name="description" content="Ordena las visitas del día desde tu ubicación respetando el horario de cada cliente. El administrador aprueba los cambios y ve el avance del equipo.">
 <link rel="canonical" href="https://ruta-del-dia-ochre.vercel.app/">
-<meta name="theme-color" content="#10231C">
-<meta name="color-scheme" content="light">
-
+<meta name="theme-color" content="#0F2747">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_PE">
-<meta property="og:site_name" content="Ruta del día">
-<meta property="og:title" content="Ruta del día: ordena tus visitas por la ruta más corta">
-<meta property="og:description" content="Marca a quién visitas hoy y la app ordena las paradas por calles, desde donde estás.">
+<meta property="og:site_name" content="Nivo">
+<meta property="og:title" content="Nivo Ruta">
+<meta property="og:description" content="Ordena las visitas del día desde tu ubicación respetando el horario de cada cliente. El administrador aprueba los cambios y ve el avance del equipo.">
 <meta property="og:url" content="https://ruta-del-dia-ochre.vercel.app/">
-<meta property="og:image" content="https://ruta-del-dia-ochre.vercel.app/vista-previa.png">
+<meta property="og:image" content="https://ruta-del-dia-ochre.vercel.app/nivo-vista.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Ruta del día: una lista de visitas numeradas y los kilómetros por recorrer">
+<meta property="og:image:alt" content="Nivo Ruta: La ruta más corta, a la hora correcta.">
 <meta name="twitter:card" content="summary_large_image">
-
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icono-180.png">
-<link rel="manifest" href="/manifest.webmanifest">
-
+<link rel="icon" href="/nivo-icono.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="/app.css">
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Ruta del día",
-  "url": "https://ruta-del-dia-ochre.vercel.app/",
-  "description": "App para vendedores en ruta: ordena las visitas del día por calles, desde la ubicación actual.",
-  "applicationCategory": "BusinessApplication",
-  "operatingSystem": "Android, iOS, Windows, macOS",
-  "inLanguage": "es-PE"
-}
-</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="/nivo.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Nivo Ruta", "applicationCategory": "BusinessApplication", "operatingSystem": "Web", "description": "Ordena las visitas del día desde tu ubicación respetando el horario de cada cliente. El administrador aprueba los cambios y ve el avance del equipo.", "url": "https://ruta-del-dia-ochre.vercel.app/", "inLanguage": "es-PE", "publisher": {"@type": "Organization", "name": "Nivo"}}</script>
 </head>
-<body>
+<body class="app-ruta">
 <a class="saltar" href="#contenido">Saltar al contenido</a>
-
 <header class="cab">
-  <div class="cab-in">
-    <a class="marca" id="marca" href="#/">Ruta del día</a>
-    <nav class="tabs" id="tabs" aria-label="Secciones" hidden></nav>
-    <div class="cuenta" id="cuenta" hidden>
-      <span class="cuenta-correo" id="cuenta-correo"></span>
-      <button type="button" class="btn-cab" id="mi-clave" data-accion="mi-clave">Mi contraseña</button>
-      <button type="button" class="btn-cab" data-accion="salir">Salir</button>
-    </div>
+  <div class="caja">
+    <a class="marca" href="/" aria-label="Nivo Ruta, inicio"><svg class="" viewBox="0 0 106 80" aria-hidden="true"><defs><linearGradient id="n-b2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D3EAE5"/><stop offset="1" stop-color="#8FCBC6"/></linearGradient><linearGradient id="n-b3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4FAF7C"/><stop offset="1" stop-color="#1E4B73"/></linearGradient></defs><rect x="0" y="42" width="40" height="38" rx="6" fill="#F4F1EA"/><rect x="34" y="22" width="36" height="58" rx="6" fill="url(#n-b2)"/><path d="M34 40 L34 80 L70 80 Z" fill="#081A30"/><rect x="70" y="0" width="36" height="80" rx="8" fill="url(#n-b3)"/><path d="M70 29 L70 80 L106 80 Z" fill="#081A30" opacity=".75"/></svg><b>NIVO</b><span class="chip">Ruta</span></a>
+    <nav aria-label="Secciones"><a href="#funciones">Funciones</a><a href="#como">Cómo funciona</a><a href="#contacto">Contacto</a></nav>
+    <div class="cab-acciones"><a class="btn btn-borde" href="/panel">Ingresar</a><a class="btn btn-claro" href="https://wa.me/51965604732?text=Hola%2C%20quiero%20conocer%20Nivo%20Ruta." target="_blank" rel="noopener">Solicitar demo</a></div>
   </div>
 </header>
-
-<p class="aviso-demo" id="aviso-demo" hidden>Modo de prueba: los datos se guardan solo en este dispositivo.</p>
-
-<main id="contenido" tabindex="-1">
-  <section class="carga" id="vista-carga" aria-live="polite">
-    <p>Cargando tu ruta…</p>
-  </section>
-
-  <section class="acceso" id="vista-acceso" hidden></section>
-
-  <div class="app" id="vista-app" hidden>
-    <h1 class="oculto">Ruta del día</h1>
-    <section class="panel panel-clientes" id="panel-clientes" aria-labelledby="t-clientes"></section>
-    <section class="panel panel-ruta" id="panel-ruta" aria-labelledby="t-ruta"></section>
-  </div>
-
-  <section class="ficha" id="vista-cliente" hidden></section>
-
-  <section class="pagina" id="vista-pagina" hidden></section>
-</main>
-
-<footer class="pie">
-  <nav aria-label="Información legal">
-    <a href="/privacidad">Privacidad</a>
-    <a href="/terminos">Términos</a>
-    <a href="/cookies">Cookies</a>
-    <a href="/aviso-legal">Aviso legal</a>
-    <a id="enlace-soporte" href="#" hidden target="_blank" rel="noopener">Soporte por WhatsApp</a>
-  </nav>
-  <p class="creditos">Rutas por calles: openrouteservice.org by HeiGIT. Datos de mapa © colaboradores de OpenStreetMap.</p>
-</footer>
-
-<div class="toast" id="toast" role="status" aria-live="polite" hidden>
-  <span id="toast-texto"></span>
-  <button type="button" id="toast-accion" hidden></button>
-</div>
-
-<dialog class="dialogo" id="dialogo" aria-labelledby="dialogo-titulo">
-  <form method="dialog">
-    <h2 id="dialogo-titulo"></h2>
-    <p id="dialogo-texto"></p>
-    <div class="dialogo-botones">
-      <button type="submit" value="no" class="btn btn-linea">Cancelar</button>
-      <button type="submit" value="si" class="btn btn-peligro" id="dialogo-si">Eliminar</button>
+<main id="contenido">
+<section class="portada" aria-labelledby="t-portada">
+  <div class="caja portada-in">
+    <div class="portada-txt">
+      <span class="etiqueta pildora">Nivo Ruta · Rutas de visita</span>
+      <h1 id="t-portada">La ruta más corta, <em>a la hora correcta.</em></h1>
+      <p class="bajada">Ordena las visitas del día desde tu ubicación respetando el horario de cada cliente. El administrador aprueba los cambios y ve el avance de todo su equipo.</p>
+      <div class="botones"><a class="btn btn-acento btn-grande" href="https://wa.me/51965604732?text=Hola%2C%20quiero%20conocer%20Nivo%20Ruta." target="_blank" rel="noopener">Solicitar demo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-borde btn-grande" href="#como">Ver cómo funciona</a></div>
     </div>
-  </form>
-</dialog>
-
-<div class="aviso-cookies" id="aviso-cookies" role="region" aria-label="Aviso de almacenamiento" hidden>
-  <p>Solo guardamos en tu dispositivo lo necesario para mantener tu sesión. No usamos cookies de publicidad. <a href="/cookies">Ver detalle</a></p>
-  <button type="button" class="btn btn-linea" data-accion="aceptar-aviso">Entendido</button>
-</div>
-
-<noscript>
-  <p class="sin-js">Ruta del día necesita JavaScript para funcionar. Actívalo en tu navegador y vuelve a cargar la página.</p>
-</noscript>
-
-<script src="/config.js"></script>
-<script src="/orden.js"></script>
-<script src="/app.js" defer></script>
-<script defer src="/_vercel/insights/script.js"></script>
+    <figure class="pantallas">
+      <div class="compu"><div class="compu-in">
+        <div class="compu-lado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="compu-main">
+          <b>Rutas de hoy</b>
+          <div class="kpis"><div class="kpi"><span>Visitas</span><b class="num">14 / 22</b></div><div class="kpi"><span>Kilómetros</span><b class="num">48.5</b></div><div class="kpi"><span>Por aprobar</span><b class="num">1</b></div></div>
+          <div class="compu-fila">
+            <div class="barras" aria-hidden="true"><i class="b60"></i><i class="b40"></i><i class="b75"></i><i class="b50"></i><i class="b70"></i><i class="b45"></i><i class="b80"></i></div>
+            <div class="tabla"><div><b>José L. · transporte</b><span>6 de 9 visitas</span><em>En ruta</em></div><div><b>Ana R. · transporte</b><span>8 de 8 visitas</span><em>Terminó</em></div><div><b>Farmacia del Pueblo</b><span>Fuera de horario</span><em>Por aprobar</em></div><div><b>Luis P. · transporte</b><span>0 de 5 visitas</span><em>Por salir</em></div></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="cel"><div class="cel-in">
+        <b>Mi ruta</b>
+        <div class="cel-fila"><span>1 · Bodega San Martín</span><b>09:10</b></div><div class="cel-fila"><span>2 · Panadería El Trigal</span><b>09:45</b></div><div class="cel-fila"><span>3 · Farmacia Central</span><b>10:30</b></div>
+        <div class="cel-total"><span>Total</span><span class="num">18.2 km</span></div>
+        <div class="cel-boton">Ordenar ruta</div>
+      </div></div>
+      <figcaption>Pantallas con datos de ejemplo</figcaption>
+    </figure>
+  </div>
+  <div class="caja"><ul class="datos"><li><span><b>Ruta óptima</b><span>Menor recorrido por calles</span></span></li><li><span><b>Horarios</b><span>Ventana y duración por cliente y por día</span></span></li><li><span><b>Aprobaciones</b><span>Fuera de horario, decide el administrador</span></span></li><li><span><b>Calendario</b><span>Qué clientes tocan cada día</span></span></li></ul></div>
+</section>
+<section class="funciones" id="funciones" aria-labelledby="t-funciones">
+  <div class="caja">
+    <div class="titular"><div><span class="etiqueta">Funciones</span><h2 id="t-funciones">Herramientas que se adaptan a tu negocio.</h2></div>
+      <p>Cada negocio entra a su propia zona, con su logo, sus colores y su equipo.</p></div>
+    <div class="tarjetas"><article class="tarjeta"><span class="n num">01</span><h3>Ruta del día</h3><p>Visitas en orden con hora de llegada estimada.</p><div class="mini" aria-hidden="true"><i></i><i></i><i></i></div></article><article class="tarjeta"><span class="n num">02</span><h3>Fichas de clientes</h3><p>Ubicación confirmada, horario y duración de cada visita.</p><div class="mini" aria-hidden="true"><i></i><i></i><i></i></div></article><article class="tarjeta"><span class="n num">03</span><h3>Aprobaciones</h3><p>Ir o saltar un cliente fuera de horario, con visto bueno.</p><div class="mini" aria-hidden="true"><i></i><i></i><i></i></div></article><article class="tarjeta"><span class="n num">04</span><h3>Avance del equipo</h3><p>El administrador ve visitas y kilómetros de cada transportista.</p><div class="mini" aria-hidden="true"><i></i><i></i><i></i></div></article></div>
+  </div>
+</section>
+<section class="como" id="como" aria-labelledby="t-como">
+  <div class="caja">
+    <div class="pasos"><div><span class="etiqueta">Cómo funciona</span><h2 id="t-como">Empiezas en tres pasos.</h2></div>
+      <ol><li><b class="num">01</b><span>Creamos tu empresa y tu usuario administrador</span></li><li><b class="num">02</b><span>Registras a tus transportistas y a sus clientes</span></li><li><b class="num">03</b><span>Cada mañana tocan «Ordenar» y salen a ruta</span></li></ol></div>
+    <div class="varios"><h2>Una plataforma, varios negocios.</h2>
+      <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="#0F2747" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Varias empresas, cada una con su equipo</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="#0F2747" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Transportistas con usuario, sin correo</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="#0F2747" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Cada visita se abre en Google Maps</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="#0F2747" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Hecho para usarse en el celular</span></li></ul>
+      <svg class="fondo" viewBox="0 0 106 80" aria-hidden="true"><rect x="0" y="42" width="40" height="38" rx="6" fill="#E8E3D6"/><rect x="34" y="22" width="36" height="58" rx="6" fill="#BFD9D2"/><path d="M34 40 L34 80 L70 80 Z" fill="#0F2747"/><rect x="70" y="0" width="36" height="80" rx="8" fill="#4FAF7C"/><path d="M70 29 L70 80 L106 80 Z" fill="#0F2747" opacity=".75"/></svg></div>
+  </div>
+</section>
+<section class="cierre" id="contacto" aria-labelledby="t-cierre">
+  <div class="caja">
+    <div><span class="etiqueta">Nivo Ruta</span><h2 id="t-cierre">Hablemos de tu negocio.</h2><p>Cuéntanos cómo reparten o visitan hoy y te mostramos Nivo Ruta con tus clientes.</p></div>
+    <a class="btn btn-acento btn-grande" href="https://wa.me/51965604732?text=Hola%2C%20quiero%20conocer%20Nivo%20Ruta." target="_blank" rel="noopener">Escríbenos por WhatsApp <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+</main>
+<footer class="pie">
+  <div class="caja">
+    <div class="pie-arriba">
+      <div class="pie-marca"><a class="marca" href="/" aria-label="Nivo, inicio"><svg class="" viewBox="0 0 106 80" aria-hidden="true"><rect x="0" y="42" width="40" height="38" rx="6" fill="#F4F1EA"/><rect x="34" y="22" width="36" height="58" rx="6" fill="#BFD9D2"/><path d="M34 40 L34 80 L70 80 Z" fill="#081A30"/><rect x="70" y="0" width="36" height="80" rx="8" fill="#2E9AA3"/><path d="M70 29 L70 80 L106 80 Z" fill="#081A30" opacity=".75"/></svg><b>NIVO</b></a>
+        <span>Microapps para negocios que quieren ordenar su operación.</span></div>
+      <nav aria-label="Pie de página">
+        <div><b>Nivo Ruta</b><a href="#funciones">Funciones</a><a href="#como">Cómo funciona</a><a href="/panel">Ingresar</a></div>
+        <div><b>Otras apps Nivo</b><a href="https://sistema-ventas-khaki-eight.vercel.app/">Nivo Ventas</a><a href="https://crm-consejeria.vercel.app/">Nivo CRM</a><a href="https://pedidos-mayoristas-pe.vercel.app/">Nivo Mayoristas</a><a href="https://fidelizacion-chi.vercel.app/">Nivo Puntos</a><a href="https://plataforma-pedidos-eta.vercel.app/">Nivo Pedidos</a></div>
+        <div><b>Legal</b><a href="/terminos">Términos del servicio</a><a href="/privacidad">Política de privacidad</a><a href="/cookies">Cookies</a><a href="/aviso-legal">Aviso legal</a></div>
+      </nav>
+    </div>
+    <div class="pie-abajo"><span>© 2026 Nivo</span><span>Hecho en Perú</span></div>
+  </div>
+</footer>
 </body>
 </html>
