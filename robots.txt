@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /panel
 
-Sitemap: https://ruta-del-dia-ochre.vercel.app/sitemap.xml
+Sitemap: https://nivo-ruta.vercel.app/sitemap.xml
