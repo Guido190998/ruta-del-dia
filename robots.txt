@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /panel
 
 Sitemap: https://ruta-del-dia-ochre.vercel.app/sitemap.xml
