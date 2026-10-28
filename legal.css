@@ -1,0 +1,44 @@
+/* Páginas legales de Nivo Ruta: privacidad, términos, cookies y aviso legal. */
+@font-face{font-family:"Manrope Fallback";src:local("Arial");size-adjust:104%;ascent-override:96%;descent-override:27%;line-gap-override:0%}
+:root{--navy:#0F2747;--azul:#1E4B73;--acento:#4FAF7C;--chip:#4FAF7C;--soporte:#BFD9D2;--crema:#F4F1EA;--gris:#4A5B6C;--linea:#E3DED2}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--crema);color:var(--navy);font-family:"Manrope","Manrope Fallback",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+a{color:var(--azul);text-underline-offset:3px}
+a:hover{color:var(--navy)}
+:focus-visible{outline:3px solid var(--acento);outline-offset:2px;border-radius:4px}
+.saltar{position:absolute;left:12px;top:-60px;z-index:10;background:var(--chip);color:var(--navy);font-weight:800;padding:10px 16px;border-radius:8px}
+.saltar:focus{top:12px}
+.in{max-width:760px;margin:0 auto;padding:0 20px}
+.cab{background:var(--navy);color:var(--crema);border-bottom:3px solid var(--acento)}
+.cab .in{max-width:1120px;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.marca{display:inline-flex;align-items:center;gap:10px;color:var(--crema);text-decoration:none;min-height:44px}
+.marca .sim{width:40px;height:30px;flex:none}
+.marca b{font-size:20px;font-weight:800;letter-spacing:.04em}
+.chip{font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--navy)}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1.5px solid rgba(244,241,234,.35);border-radius:10px;color:var(--crema);text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
+.btn:hover{color:var(--crema);background:rgba(244,241,234,.08)}
+main{padding:48px 0 64px;outline:none}
+.legal{max-width:760px}
+.rotulo{margin:0;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--azul)}
+h1{margin:6px 0 4px;font-size:clamp(32px,6vw,44px);line-height:1.08;font-weight:800;letter-spacing:-.02em}
+.fecha{margin:0 0 32px;color:var(--gris);font-size:14px}
+h2{margin:36px 0 10px;font-size:21px;line-height:1.25;font-weight:800}
+p,li{max-width:68ch}
+p{margin:0 0 12px}
+ul{margin:0 0 12px;padding-left:22px}
+li{margin-bottom:8px}
+li::marker{color:var(--acento)}
+mark{background:#D8EFE2;color:var(--navy);padding:0 4px;border-radius:4px}
+.nw{white-space:nowrap}
+.tabla{overflow-x:auto;margin:8px 0 16px;border:1px solid var(--linea);border-radius:12px;background:#fff}
+table{width:100%;min-width:520px;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:12px 16px;border-bottom:1px solid var(--linea)}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris)}
+tr:last-child td{border-bottom:0}
+.pie{background:var(--navy);color:#C9D6DF;font-size:14px}
+.pie .in{max-width:1120px;padding-top:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px}
+.pie nav{display:flex;flex-wrap:wrap;gap:0 20px}
+.pie a{color:var(--crema);display:inline-flex;align-items:center;min-height:44px}
+.pie a[aria-current]{color:var(--acento)}
+@media (max-width:480px){.btn{padding:0 12px}.marca .chip{display:none}}
