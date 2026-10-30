@@ -22,6 +22,8 @@ const CABECERAS = [
 
 export default {
   async fetch(request, env) {
+    // Las claves secretas de Cloudflare llegan en env; las funciones de /api las leen en process.env.
+    for (const [k, v] of Object.entries(env)) if (typeof v === "string") process.env[k] = v;
     const url = new URL(request.url);
     const ruta = url.pathname;
     let res;
