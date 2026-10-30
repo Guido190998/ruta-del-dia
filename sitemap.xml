@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://nivo-ruta.vercel.app/</loc></url>
-  <url><loc>https://nivo-ruta.vercel.app/privacidad</loc></url>
-  <url><loc>https://nivo-ruta.vercel.app/terminos</loc></url>
-  <url><loc>https://nivo-ruta.vercel.app/cookies</loc></url>
-  <url><loc>https://nivo-ruta.vercel.app/aviso-legal</loc></url>
+  <url><loc>https://ruta.nivo-pe.workers.dev/</loc></url>
+  <url><loc>https://ruta.nivo-pe.workers.dev/privacidad</loc></url>
+  <url><loc>https://ruta.nivo-pe.workers.dev/terminos</loc></url>
+  <url><loc>https://ruta.nivo-pe.workers.dev/cookies</loc></url>
+  <url><loc>https://ruta.nivo-pe.workers.dev/aviso-legal</loc></url>
 </urlset>
