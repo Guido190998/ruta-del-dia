@@ -1,0 +1,10 @@
+sql
+supabase
+README.md
+CHECKLIST.md
+vercel.json
+.vercelignore
+wrangler.jsonc
+worker.js
+api
+.github
