@@ -17,6 +17,7 @@
 .app-puntos{--acento:#C86FA4;--acento-suave:#F4E0EC}
 .app-ruta{--acento:#4FAF7C;--acento-suave:#DBF0E3}
 .app-pedidos{--acento:#E07A5F;--acento-suave:#F7DED6}
+.app-erp{--acento:#5B8FD9;--acento-suave:#E3ECF9}
 
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
