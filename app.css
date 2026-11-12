@@ -493,3 +493,9 @@ body[data-vista="acceso"] .aviso-cookies { position: static; margin: 0 var(--e4)
   .btn:active, .btn-icono:active { transform: none; }
   .toast { animation: none; }
 }
+
+/* Botón «Volver a la web»: lleva del panel a la página principal desde donde se ingresó. */
+.cab-in .nivo-volver { gap: 6px; margin-left: auto; white-space: nowrap; }
+.nivo-volver svg { width: 16px; height: 16px; flex: none; }
+.nivo-volver .nv-corto { display: none; }
+@media (max-width: 520px) { .nivo-volver .nv-largo { display: none; } .nivo-volver .nv-corto { display: inline; } }

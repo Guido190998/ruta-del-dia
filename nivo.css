@@ -176,3 +176,37 @@ h2{margin:0;font-size:clamp(30px,3.6vw,46px);line-height:1.06;font-weight:800;le
   .funciones .caja,.como .caja{padding-block:56px}
   .kpi b{font-size:15px}
 }
+
+/* Menú «Apps Nivo» de la cabecera: lleva a la web principal y a todas las apps Nivo (también Nivo ERP). */
+.nivo-apps{position:relative}
+.nivo-apps>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0;cursor:pointer;color:#DCE6EC;font-size:15px;font-weight:600;border-radius:6px;transition:color 140ms ease;-webkit-tap-highlight-color:transparent}
+.nivo-apps>summary::-webkit-details-marker{display:none}
+.nivo-apps>summary:hover,.nivo-apps[open]>summary{color:#FFFFFF}
+.nivo-apps>summary:focus-visible{outline:2px solid #2E9AA3;outline-offset:4px}
+.nivo-apps>summary svg{width:14px;height:14px;flex:none;transition:transform 220ms cubic-bezier(.2,.8,.2,1)}
+.nivo-apps[open]>summary svg{transform:rotate(180deg)}
+.nivo-apps .nivo-apps-menu{position:absolute;z-index:60;top:calc(100% + 8px);left:0;width:288px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:14px;background:#0B1F3A;border:1px solid rgba(191,217,210,.18);box-shadow:0 20px 44px rgba(4,12,24,.5);transform-origin:top left;animation:nivo-apps-entra 160ms cubic-bezier(.2,.8,.2,1)}
+@keyframes nivo-apps-entra{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.nivo-apps .nivo-apps-menu a{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border-radius:10px;color:#DCE6EC;text-decoration:none;font-size:15px;font-weight:600;line-height:1.25;transition:background-color 140ms ease,color 140ms ease}
+.nivo-apps .nivo-apps-menu a:hover{background:rgba(191,217,210,.08);color:#FFFFFF}
+.nivo-apps .nivo-apps-menu a:focus-visible{outline:2px solid #2E9AA3;outline-offset:-2px}
+.nivo-apps .nivo-apps-menu a[aria-current="page"]{background:rgba(191,217,210,.06);color:#FFFFFF}
+.nivo-apps .nivo-apps-menu i{width:10px;height:10px;border-radius:50%;flex:none;background:var(--punto,#2E9AA3)}
+.nivo-apps .p-ventas{--punto:#2E9AA3}
+.nivo-apps .p-crm{--punto:#6F86D6}
+.nivo-apps .p-mayoristas{--punto:#E3A43A}
+.nivo-apps .p-puntos{--punto:#C86FA4}
+.nivo-apps .p-ruta{--punto:#4FAF7C}
+.nivo-apps .p-pedidos{--punto:#E07A5F}
+.nivo-apps .p-erp{--punto:#5B8FD9}
+.nivo-apps .nivo-apps-menu small{margin-left:auto;font-size:12px;font-weight:600;color:#93A7B8}
+.nivo-apps .nivo-apps-menu .nivo-apps-web{flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px 12px;margin-bottom:6px;border-radius:10px 10px 4px 4px;border-bottom:1px solid rgba(191,217,210,.14)}
+.nivo-apps .nivo-apps-web b{font-size:15px;font-weight:800;color:#FFFFFF}
+.nivo-apps .nivo-apps-web span{font-size:13px;font-weight:500;color:#93A7B8}
+.nivo-apps .nivo-apps-titulo{padding:4px 12px 2px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#93A7B8}
+@media (max-width:640px){
+  .cab{position:relative}
+  .nivo-apps{position:static}
+  .nivo-apps .nivo-apps-menu{left:16px;right:16px;width:auto;max-width:none}
+}
+@media (prefers-reduced-motion:reduce){.nivo-apps .nivo-apps-menu{animation:none}.nivo-apps>summary svg{transition:none}}
