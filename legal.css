@@ -1,6 +1,15 @@
-/* Páginas legales de Nivo Ruta: privacidad, términos, cookies y aviso legal. */
+/* Páginas legales de todas las webs Nivo: privacidad, términos, cookies y aviso legal.
+   Es el mismo archivo en todas las webs Nivo. El color de cada app se elige con la clase del <body>
+   (app-ventas, app-crm, app-mayoristas, app-puntos, app-ruta, app-pedidos, app-erp); sin clase, colores de Nivo. */
 @font-face{font-family:"Manrope Fallback";src:local("Arial");size-adjust:104%;ascent-override:96%;descent-override:27%;line-gap-override:0%}
-:root{--navy:#0F2747;--azul:#1E4B73;--acento:#4FAF7C;--chip:#4FAF7C;--soporte:#BFD9D2;--crema:#F4F1EA;--gris:#4A5B6C;--linea:#E3DED2}
+:root{--navy:#0F2747;--azul:#1E4B73;--acento:#2E9AA3;--chip:#45AEB6;--resalte:#D5EDEB;--soporte:#BFD9D2;--crema:#F4F1EA;--gris:#4A5B6C;--linea:#E3DED2}
+.app-ventas{--acento:#2E9AA3;--chip:#45AEB6;--resalte:#D5EDEB}
+.app-crm{--acento:#6F86D6;--chip:#8A9EE3;--resalte:#E1E7F8}
+.app-mayoristas{--acento:#E3A43A;--chip:#E3A43A;--resalte:#FBEBD0}
+.app-puntos{--acento:#C86FA4;--chip:#D58BB6;--resalte:#F4E0EC}
+.app-ruta{--acento:#4FAF7C;--chip:#4FAF7C;--resalte:#D8EFE2}
+.app-pedidos{--acento:#E07A5F;--chip:#E07A5F;--resalte:#FBE4DC}
+.app-erp{--acento:#5B8FD9;--chip:#7BA6E3;--resalte:#E3ECF9}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--crema);color:var(--navy);font-family:"Manrope","Manrope Fallback",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
@@ -29,7 +38,7 @@ p{margin:0 0 12px}
 ul{margin:0 0 12px;padding-left:22px}
 li{margin-bottom:8px}
 li::marker{color:var(--acento)}
-mark{background:#D8EFE2;color:var(--navy);padding:0 4px;border-radius:4px}
+mark{background:var(--resalte);color:var(--navy);padding:0 4px;border-radius:4px}
 .nw{white-space:nowrap}
 .tabla{overflow-x:auto;margin:8px 0 16px;border:1px solid var(--linea);border-radius:12px;background:#fff}
 table{width:100%;min-width:520px;border-collapse:collapse;font-size:15px}
