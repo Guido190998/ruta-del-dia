@@ -22,7 +22,7 @@ function cabeceras(req: Request) {
   if (ORIGENES.includes(origen)) h["Access-Control-Allow-Origin"] = origen;
   return h;
 }
-const validarClave = (c: unknown) => (String(c ?? "").length >= 8 && String(c).length <= 72 ? null : "La contraseña debe tener al menos 8 caracteres.");
+const validarClave = (c: unknown) => (String(c ?? "").length >= 12 && String(c).length <= 72 ? null : "La contraseña debe tener al menos 12 caracteres.");
 async function sha256Hex(texto: string) {
   const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
   return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, "0")).join("");

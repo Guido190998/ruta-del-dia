@@ -21,16 +21,20 @@ const SLUG_RESERVADOS = [
 ];
 const COLOR = /^#[0-9A-Fa-f]{6}$/;
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-const responder = (cuerpo: unknown, estado = 200) =>
-  new Response(JSON.stringify(cuerpo), { status: estado, headers: { ...CORS, "Content-Type": "application/json" } });
-const fallo = (mensaje: string, estado = 400) => responder({ error: mensaje }, estado);
+// Orígenes permitidos para CORS. Añadir aquí el dominio propio cuando se compre.
+const ORIGENES = ["https://ruta.nivo-pe.workers.dev"];
+function cabeceras(req: Request) {
+  const origen = req.headers.get("Origin") || "";
+  const h: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+  if (ORIGENES.includes(origen)) h["Access-Control-Allow-Origin"] = origen;
+  return h;
+}
 
-const validarClave = (c: unknown) => (String(c ?? "").length >= 8 && String(c).length <= 72 ? null : "La contraseña debe tener al menos 8 caracteres.");
+const validarClave = (c: unknown) => (String(c ?? "").length >= 12 && String(c).length <= 72 ? null : "La contraseña debe tener al menos 12 caracteres.");
 const validarNombre = (n: unknown) => (String(n ?? "").trim().length >= 2 ? null : "Escribe el nombre.");
 const limpio = (s: unknown, max = 80) => String(s ?? "").trim().slice(0, max);
 function validarCorreo(c: unknown): string | null {
@@ -61,6 +65,11 @@ function elegirUsuario(n1: unknown, n2: unknown, a1: unknown, a2: unknown, exist
 }
 
 Deno.serve(async (req) => {
+  const CORS = cabeceras(req);
+  const responder = (cuerpo: unknown, estado = 200) =>
+    new Response(JSON.stringify(cuerpo), { status: estado, headers: { ...CORS, "Content-Type": "application/json" } });
+  const fallo = (mensaje: string, estado = 400) => responder({ error: mensaje }, estado);
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return fallo("Método no permitido", 405);
 

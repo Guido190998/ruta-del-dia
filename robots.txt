@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /panel
+Disallow: /app
 
 Sitemap: https://ruta.nivo-pe.workers.dev/sitemap.xml
