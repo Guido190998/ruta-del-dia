@@ -165,7 +165,9 @@ Deno.serve(async (req) => {
       let id: string;
       if (existe) {
         id = String(existe);
-        await admin.auth.admin.updateUserById(id, { ban_duration: "none" });  // por si se le había quitado el acceso
+        const { data: info } = await admin.auth.admin.getUserById(id);
+        const suspendida = info?.user?.banned_until && new Date(info.user.banned_until) > new Date();
+        if (suspendida) return fallo("Esa cuenta está suspendida. Reactívala a propósito antes de asignarla a una empresa.", 409);
       } else {
         id = await crearCuenta(correo, claveInterna(), nombreDueno);
       }
@@ -247,10 +249,11 @@ Deno.serve(async (req) => {
       const objetivo = String(cuerpo.usuario_id || "");
       if (objetivo === yo) return fallo("No puedes quitarte a ti mismo.");
       const destino = cuerpo.pasar_a ? String(cuerpo.pasar_a) : yo;
-      const { data: sigue, error } = await db.rpc("srv_quitar", { p_negocio: negocioId, p_user: objetivo, p_a: destino });
+      const { error } = await db.rpc("srv_quitar", { p_negocio: negocioId, p_user: objetivo, p_a: destino });
       if (error) throw error;
-      // Si ya no pertenece a nada, se bloquea su cuenta para que no pueda volver a ingresar.
-      if (!sigue) await admin.auth.admin.updateUserById(objetivo, { ban_duration: "876000h" });
+      // F-10: ya no se banea la cuenta global (era ~100 años en el proyecto compartido, afectaba a todas las apps Nivo).
+      // srv_quitar ya quitó la membresía de ruta; solo cerramos sus sesiones abiertas para que salga de inmediato.
+      try { await db.rpc("srv_cerrar_sesiones", { p_user: objetivo }); } catch (e) { console.error(String(e)); }
       return responder({ ok: true });
     }
 
