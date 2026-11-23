@@ -6,15 +6,18 @@
 // - Administrador de cada empresa: entra con su correo (puede recuperar su clave por correo).
 // - Transportistas: entran con un usuario sin correo, generado con la regla de Guido. Por dentro se guarda
 //   como "<usuario>@<enlace>.usuarios.ruta-del-dia.app" (un identificador; nunca se envía nada).
-// - Toda clave puesta por otra persona queda marcada (app_metadata.debe_cambiar_clave) y se cambia al entrar.
+// - Nadie comparte contraseñas (F-03): las altas y los reseteos devuelven un token de invitación de un solo uso
+//   (48 h) y la persona crea su propia clave en /invitacion (función ruta-invitacion).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICIO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Clave pública (anon): Supabase la inyecta sola en las Edge Functions. Sirve para verificar la contraseña actual sin privilegios.
+const ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const DOMINIO = "usuarios.ruta-del-dia.app";
 const SLUG_RESERVADOS = [
   "privacidad", "terminos", "cookies", "aviso-legal", "index", "admin", "panel", "api", "app", "login",
-  "ingresar", "soporte", "404", "manifest", "config", "orden", "favicon",
+  "ingresar", "soporte", "404", "manifest", "config", "orden", "favicon", "invitacion", "recuperar",
 ];
 const COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -89,9 +92,21 @@ Deno.serve(async (req) => {
       }
       return data.user!.id;
     }
-    async function claveTemporal(id: string, clave: string) {
-      const { error } = await admin.auth.admin.updateUserById(id, { password: clave, app_metadata: { debe_cambiar_clave: true } });
+    // F-03: ya no se comparte ninguna contraseña. La cuenta nueva nace con una clave interna aleatoria que nadie ve,
+    // y la persona crea la suya con un enlace de invitación de un solo uso (ruta-invitacion).
+    const hex = (b: Uint8Array) => Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
+    const claveInterna = () => hex(crypto.getRandomValues(new Uint8Array(32)));
+    async function crearInvitacion(usuario_id: string, tipo: "alta" | "reset") {
+      const token = hex(crypto.getRandomValues(new Uint8Array(32)));
+      const hash = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))));
+      const ahora = new Date();
+      // Una invitación nueva anula las anteriores que siguieran pendientes para esa persona.
+      await db.from("invitaciones").update({ usado_en: ahora.toISOString() }).eq("usuario_id", usuario_id).is("usado_en", null);
+      const { error } = await db.from("invitaciones").insert({
+        usuario_id, token_hash: hash, tipo, expira_en: new Date(ahora.getTime() + 48 * 3600 * 1000).toISOString(), creado_por: yo,
+      });
       if (error) throw error;
+      return token;  // se devuelve una sola vez; en la base solo queda el hash
     }
     async function negocio(id: string) {
       const { data, error } = await db.rpc("srv_negocio", { p_negocio: id });
@@ -102,10 +117,21 @@ Deno.serve(async (req) => {
 
     // ---------- Cualquier persona: elegir su propia contraseña ----------
     if (accion === "cambiar_mi_clave") {
+      // Solo el primer ingreso forzado (debe_cambiar_clave) salta la confirmación: aún no tiene una contraseña propia.
+      // La recuperación por enlace de correo NO pasa por aquí: el cliente usa sb.auth.updateUser con su sesión de recuperación.
+      const sinActual = quien.user.app_metadata?.debe_cambiar_clave === true;
+      if (!sinActual) {
+        if (!ANON) throw new Error("Falta SUPABASE_ANON_KEY en la función.");
+        const verif = createClient(URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
+        const { error: eActual } = await verif.auth.signInWithPassword({ email: String(quien.user.email || ""), password: String(cuerpo.clave_actual ?? "") });
+        if (eActual) return fallo("La contraseña actual no es correcta.", 403);
+      }
       const m = validarClave(cuerpo.clave);
       if (m) return fallo(m);
       const { error } = await admin.auth.admin.updateUserById(yo, { password: String(cuerpo.clave), app_metadata: { debe_cambiar_clave: false } });
       if (error) throw error;
+      // Cierra las demás sesiones abiertas con la clave anterior (la actual se renueva en el cliente).
+      try { await db.rpc("srv_cerrar_sesiones", { p_user: yo }); } catch (e) { console.error(String(e)); }
       return responder({ ok: true });
     }
 
@@ -132,26 +158,25 @@ Deno.serve(async (req) => {
         id = String(existe);
         await admin.auth.admin.updateUserById(id, { ban_duration: "none" });  // por si se le había quitado el acceso
       } else {
-        const mc = validarClave(cuerpo.clave);
-        if (mc) return fallo(mc);
-        id = await crearCuenta(correo, String(cuerpo.clave), nombreDueno);
+        id = await crearCuenta(correo, claveInterna(), nombreDueno);
       }
       const { data: neg, error } = await db.rpc("srv_alta_empresa", {
         p_user: id, p_nombre: nombreNeg, p_slug: slug, p_nombre_dueno: nombreDueno, p_logo: logo, p_tinta: tinta, p_acento: acento,
       });
       if (error) { if (!existe) await admin.auth.admin.deleteUser(id); throw error; }
-      return responder({ ok: true, negocio_id: neg, slug, correo, existente: !!existe });
+      const invitacion = existe ? null : await crearInvitacion(id, "alta");
+      return responder({ ok: true, negocio_id: neg, slug, correo, existente: !!existe, ...(invitacion ? { token: invitacion } : {}) });
     }
 
     if (accion === "restablecer_dueno") {
       if (!esAdmin) return fallo("No tienes permiso.", 403);
-      const m = validarClave(cuerpo.clave);
-      if (m) return fallo(m);
       const n = await negocio(String(negocioId || ""));
       if (!n.dueno_id) return fallo("Esta empresa no tiene administrador asignado.");
       if (n.dueno_id === yo) return fallo("Para tu propia contraseña usa «Mi contraseña».");
-      await claveTemporal(n.dueno_id, String(cuerpo.clave));
-      return responder({ ok: true });
+      // TODO (F-02/plataforma): avisar al titular y registrar en auditoría cuando exista email + core.auditoria
+      const tokenReset = await crearInvitacion(n.dueno_id, "reset");
+      try { await db.rpc("srv_cerrar_sesiones", { p_user: n.dueno_id }); } catch (e) { console.error(String(e)); }
+      return responder({ ok: true, token: tokenReset });
     }
 
     if (accion === "crear_superadmin") {
@@ -159,58 +184,53 @@ Deno.serve(async (req) => {
       const correo = validarCorreo(cuerpo.correo);
       if (!correo) return fallo("Escribe un correo válido.");
       const { data: existe } = await db.rpc("srv_usuario_por_correo", { p_correo: correo });
-      if (!existe) {
-        const m = validarClave(cuerpo.clave);
-        if (m) return fallo(m);
-        await crearCuenta(correo, String(cuerpo.clave), "");
-      }
+      let nuevoId: string | null = null;
+      if (!existe) nuevoId = await crearCuenta(correo, claveInterna(), "");
       const { error } = await db.rpc("srv_agregar_superadmin", { p_correo: correo });
-      if (error) throw error;
-      return responder({ ok: true, correo, existente: !!existe });
+      if (error) { if (nuevoId) await admin.auth.admin.deleteUser(nuevoId); throw error; }
+      return responder({ ok: true, correo, existente: !!existe, ...(nuevoId ? { token: await crearInvitacion(nuevoId, "alta") } : {}) });
     }
 
     if (accion === "restablecer_superadmin") {
       if (!esAdmin) return fallo("No tienes permiso.", 403);
       const correo = validarCorreo(cuerpo.correo);
       if (!correo) return fallo("Escribe un correo válido.");
-      const m = validarClave(cuerpo.clave);
-      if (m) return fallo(m);
       const { data: id } = await db.rpc("srv_usuario_por_correo", { p_correo: correo });
       if (!id) return fallo("Ese correo todavía no tiene cuenta.");
       const { data: ctx2 } = await db.rpc("srv_contexto", { p_user: id, p_negocio: null });
       if (!ctx2?.admin) return fallo("Ese correo no es administrador general.");
       if (id === yo) return fallo("Para tu propia contraseña usa «Mi contraseña».");
-      await claveTemporal(id, String(cuerpo.clave));
-      return responder({ ok: true });
+      // TODO (F-02/plataforma): avisar al titular y registrar en auditoría cuando exista email + core.auditoria
+      const tokenReset = await crearInvitacion(id, "reset");
+      try { await db.rpc("srv_cerrar_sesiones", { p_user: id }); } catch (e) { console.error(String(e)); }
+      return responder({ ok: true, token: tokenReset });
     }
 
     // ---------- Administrador: su equipo ----------
     if (accion === "crear_transportista") {
       if (!negocioId || !esDueno) return fallo("Solo el administrador puede agregar transportistas.", 403);
-      const m = validarClave(cuerpo.clave);
-      if (m) return fallo(m);
       const n = await negocio(negocioId);
       const n1 = limpio(cuerpo.n1, 40), n2 = limpio(cuerpo.n2, 40), a1 = limpio(cuerpo.a1, 40), a2 = limpio(cuerpo.a2, 40);
       const usuario = elegirUsuario(n1, n2, a1, a2, new Set((n.usuarios || []).map(String)));
       const nombre = [n1, n2, a1, a2].filter(Boolean).join(" ");
       const correo = `${usuario}@${n.slug}.${DOMINIO}`;
-      const id = await crearCuenta(correo, String(cuerpo.clave), nombre, { usuario });
+      const id = await crearCuenta(correo, claveInterna(), nombre, { usuario });
       const { error } = await db.rpc("srv_alta_transportista", { p_negocio: negocioId, p_user: id, p_nombre: nombre });
       if (error) { await admin.auth.admin.deleteUser(id); throw error; }
-      return responder({ ok: true, usuario, nombre });
+      return responder({ ok: true, usuario, nombre, token: await crearInvitacion(id, "alta") });
     }
 
     if (accion === "cambiar_clave") {
       if (!negocioId || !esDueno) return fallo("Solo el administrador puede cambiar contraseñas del equipo.", 403);
       const objetivo = String(cuerpo.usuario_id || "");
-      const m = validarClave(cuerpo.clave);
-      if (m) return fallo(m);
       if (objetivo === yo) return fallo("Para tu propia contraseña usa «Mi contraseña».");
       const { data: rol } = await db.rpc("srv_rol", { p_negocio: negocioId, p_user: objetivo });
       if (!rol) return fallo("Esa persona no es de tu equipo.", 403);
       if (rol === "admin") return fallo("La contraseña de otro administrador solo la restablece el administrador general.", 403);
-      await claveTemporal(objetivo, String(cuerpo.clave));
-      return responder({ ok: true });
+      // TODO (F-02/plataforma): avisar al titular y registrar en auditoría cuando exista email + core.auditoria
+      const tokenReset = await crearInvitacion(objetivo, "reset");
+      try { await db.rpc("srv_cerrar_sesiones", { p_user: objetivo }); } catch (e) { console.error(String(e)); }
+      return responder({ ok: true, token: tokenReset });
     }
 
     if (accion === "quitar_transportista") {

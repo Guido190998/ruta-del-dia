@@ -29,7 +29,7 @@ export default {
     let res;
     const funcion = API[ruta];
     if (funcion) {
-      res = await comoVercel(funcion, request);
+      res = await comoVercel(funcion, request, env);
     } else {
       res = await env.ASSETS.fetch(request);
       if (res.status === 404) {
@@ -42,19 +42,20 @@ export default {
 };
 
 // Ejecuta una función escrita para Vercel (req, res) y devuelve una respuesta de Cloudflare.
-async function comoVercel(funcion, request) {
+async function comoVercel(funcion, request, env) {
   const url = new URL(request.url);
   const headers = {};
   for (const [k, v] of request.headers) headers[k.toLowerCase()] = v;
   let body;
   if (request.method !== "GET" && request.method !== "HEAD") {
     const texto = await request.text();
+    if (texto.length > 16 * 1024) return new Response(JSON.stringify({ error: "grande" }), { status: 413, headers: { "content-type": "application/json" } });
     body = texto;
     if ((headers["content-type"] || "").includes("application/json")) {
       try { body = texto ? JSON.parse(texto) : {}; } catch (e) { body = texto; }
     }
   }
-  const req = { method: request.method, headers, body, query: Object.fromEntries(url.searchParams), url: url.pathname + url.search };
+  const req = { method: request.method, headers, body, query: Object.fromEntries(url.searchParams), url: url.pathname + url.search, env };
   let estado = 200, salida = null;
   const cab = new Headers();
   const res = {
