@@ -1626,7 +1626,11 @@
         }
         estado.emp = s.empresa;
         aplicarMarca(s.empresa);
-        return (esAdmin() ? cargarEquipo() : Promise.resolve()).then(cargarTodo).then(function () { pintarTabs(); navegar(); });
+        return (esAdmin() ? cargarEquipo() : Promise.resolve()).then(cargarTodo).then(function () {
+          pintarTabs(); navegar();
+          var vb = $('#volverApp'); if (vb) vb.style.display = 'none';
+          if (window.NivoPlan) NivoPlan.init({ sb: sb, nombre: (estado.emp && estado.emp.nombre) || '', appNom: 'Ruta' });
+        });
       }
       if (s.admin) { $('#marca').innerHTML = NIVO_MARCA; $('#marca').setAttribute('aria-label', 'Nivo Ruta · panel general'); pintarTabs(); navegar(); return; }
       if (s.empresas.length === 1) { location.replace('/' + s.empresas[0].slug); return; }
