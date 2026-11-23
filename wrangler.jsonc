@@ -9,5 +9,10 @@
     "run_worker_first": true,
     "not_found_handling": "none",
     "html_handling": "auto-trailing-slash"
-  }
+  },
+  // F-05: cuota diaria de /api/optimizar por usuario. Guido debe crear el namespace KV (Cloudflare > Storage & Databases >
+  // KV > Create) y pegar aquí su id en lugar del marcador. Sin el binding, el worker solo aplica la verificación de pertenencia.
+  "kv_namespaces": [
+    { "binding": "CUOTA_ORS", "id": "<RELLENAR_ID_KV>" }
+  ]
 }

@@ -8,7 +8,14 @@
   var DEMO = !(CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY);
   var CDN_SUPABASE = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
   var DOMINIO = 'usuarios.ruta-del-dia.app';
-  var RESERVADAS = ['panel', 'privacidad', 'terminos', 'cookies', 'aviso-legal', 'api', '404'];
+  var RESERVADAS = ['panel', 'privacidad', 'terminos', 'cookies', 'aviso-legal', 'api', '404', 'invitacion', 'recuperar'];
+  // Enlace de invitación (/invitacion?t=...): se atiende antes que el ingreso normal y nunca como empresa.
+  var INVITACION = (function () {
+    var t = new URLSearchParams(location.search).get('t'), e = new URLSearchParams(location.search).get('e');
+    var ruta = location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (ruta !== 'invitacion' && !t) return null;
+    return { token: /^[0-9a-f]{64}$/.test(t || '') ? t : '', destino: /^[a-z0-9]+(-[a-z0-9]+)*$/.test(e || '') && RESERVADAS.indexOf(e) < 0 ? e : '' };
+  })();
   var SLUG = (function () {
     var s = (location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || '').toLowerCase();
     return s && RESERVADAS.indexOf(s) < 0 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) ? s : '';
@@ -1123,12 +1130,6 @@
     try { Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
     location.replace(location.pathname);
   }
-  var LETRAS_CLAVE = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  function claveTemporal() {
-    var buf = new Uint32Array(8), t = ''; crypto.getRandomValues(buf);
-    for (var i = 0; i < 8; i++) { t += LETRAS_CLAVE[buf[i] % LETRAS_CLAVE.length]; if (i === 3) t += '-'; }
-    return t;
-  }
   function sinTildes(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
   function soloLetras(t) { return sinTildes(t).replace(/[^a-z]/g, ''); }
   function inicial(t) { return soloLetras(String(t || '').trim().split(/\s+/)[0]).charAt(0); }
@@ -1162,14 +1163,18 @@
     var ini = String(m.nombre || '').split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0); }).join('').toUpperCase();
     return '<span class="logo logo-letras ' + (clase || '') + '" aria-hidden="true">' + esc(ini || '•') + '</span>';
   }
-  /* Tarjeta con datos de acceso para entregar. La contraseña es temporal y no se vuelve a mostrar. */
-  function credencial(titulo, filas, aviso) {
-    var texto = filas.map(function (f) { return f[0] + ': ' + f[1]; }).join('\n') + (aviso ? '' : '\n(Al entrar te pedirá crear tu propia contraseña)');
+  /* Tarjeta con el enlace de invitación para entregar. No lleva contraseña: la persona crea la suya con el enlace,
+     que caduca en 48 h y sirve una sola vez. destino = enlace de la empresa para volver a ingresar luego. Sin token: solo datos. */
+  function credencial(titulo, filas, token, aviso, destino) {
+    var enlace = token ? location.origin + '/invitacion?t=' + encodeURIComponent(token) + (destino ? '&e=' + encodeURIComponent(destino) : '') : '';
+    var base = filas.map(function (f) { return f[0] + ': ' + f[1]; }).join('\n');
+    var texto = enlace ? 'Entra a este enlace para crear tu contraseña de Nivo Ruta: ' + enlace + '\n' + base : base;
     return '<div class="cred" role="status"><p class="rotulo">' + esc(titulo) + '</p><dl>' +
+      (enlace ? '<div><dt>Enlace de invitación</dt><dd>' + esc(enlace) + '</dd></div>' : '') +
       filas.map(function (f) { return '<div><dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd></div>'; }).join('') + '</dl>' +
-      '<div class="ubic-botones"><button type="button" class="btn btn-acento" data-accion="copiar" data-texto="' + esc(texto) + '">Copiar todo</button>' +
+      '<div class="ubic-botones"><button type="button" class="btn btn-acento" data-accion="copiar" data-texto="' + esc(enlace || texto) + '">' + (enlace ? 'Copiar enlace' : 'Copiar todo') + '</button>' +
       '<a class="btn btn-linea" href="https://wa.me/?text=' + encodeURIComponent(texto) + '" target="_blank" rel="noopener">Enviar por WhatsApp</a></div>' +
-      '<p class="ayuda">' + esc(aviso || 'La contraseña es temporal: al entrar deberá crear la suya. No se vuelve a mostrar.') + '</p></div>';
+      '<p class="ayuda">' + esc(aviso || 'La persona crea su propia contraseña con este enlace. Caduca en 48 horas y sirve una sola vez; no se vuelve a mostrar.') + '</p></div>';
   }
   /* Reduce el logo para guardarlo dentro de la base (máximo 320 × 160). */
   function prepararLogo(file) {
@@ -1270,7 +1275,7 @@
   function debeCambiar(u) { return !!(u && u.app_metadata && u.app_metadata.debe_cambiar_clave); }
   function pintarClave(motivo) {
     var u = estado.usuario || {}, meta = u.user_metadata || {}, nombre = String(meta.nombre || '').split(/\s+/)[0];
-    var obligatoria = motivo !== 'voluntaria', terminos = obligatoria && !esCuentaUsuario(u.email) && !meta.terminos_aceptados_en;
+    var obligatoria = motivo !== 'voluntaria', pideActual = motivo === 'voluntaria' && !debeCambiar(u), terminos = obligatoria && !esCuentaUsuario(u.email) && !meta.terminos_aceptados_en;
     estado.cambioClave = motivo;
     $('#vista-pagina').innerHTML = '<div class="ficha">' +
       '<p class="rotulo">' + (motivo === 'recuperacion' ? 'Recuperación de contraseña' : obligatoria ? 'Primer ingreso' : 'Tu cuenta') + '</p>' +
@@ -1279,6 +1284,7 @@
         : obligatoria ? 'La contraseña que te entregaron era temporal. Antes de continuar debes cambiarla; nadie más conocerá la nueva.'
         : 'Elige tu nueva contraseña. Después volverás a entrar con ella.') + '</p>' +
       '<form class="formulario" id="form-clave" novalidate>' +
+      (pideActual ? campo('actual', 'Contraseña actual', '', 'password', 'required maxlength="72" autocomplete="current-password"') : '') +
       campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="8" maxlength="72" autocomplete="new-password"', 'Mínimo 8 caracteres.') +
       campo('k2', 'Repite la nueva contraseña', '', 'password', 'required maxlength="72" autocomplete="new-password"') +
       (terminos ? '<label class="acepto"><input type="checkbox" name="acepto"><span>Soy mayor de 18 años y acepto los <a href="/terminos" target="_blank" rel="noopener">Términos</a> y la <a href="/privacidad" target="_blank" rel="noopener">Política de privacidad</a>.</span></label>' : '') +
@@ -1291,18 +1297,82 @@
   function guardarClave(form) {
     var a = form.k1.value, b = form.k2.value, error = $('#error-clave'), boton = $('button[type="submit"]', form);
     var fallar = function (m) { error.textContent = m; error.hidden = false; };
+    var actual = form.actual ? form.actual.value : '';
+    if (form.actual && !actual) return fallar('Escribe tu contraseña actual.');
     if (a.length < 8) return fallar('Usa al menos 8 caracteres.');
     if (a !== b) return fallar('Las dos contraseñas no coinciden.');
     if (form.acepto && !form.acepto.checked) return fallar('Para continuar debes aceptar los Términos y la Política de privacidad.');
     error.hidden = true; boton.disabled = true; boton.textContent = 'Guardando…';
-    // Los términos se guardan antes: al cambiar la contraseña, Supabase cierra esta sesión.
-    (form.acepto ? sb.auth.updateUser({ data: { terminos_aceptados_en: new Date().toISOString() } }).then(function (r) { if (r.error) throw r.error; }) : Promise.resolve())
-      .then(function () { return cuentas('cambiar_mi_clave', { clave: a }); })
+    var datosTerminos = form.acepto ? { terminos_aceptados_en: new Date().toISOString() } : null;
+    var guardado;
+    if (estado.cambioClave === 'recuperacion') {
+      // Sesión de recuperación de Supabase: el cliente fija la nueva clave sin la anterior (updateUser).
+      var carga = { password: a }; if (datosTerminos) carga.data = datosTerminos;
+      guardado = sb.auth.updateUser(carga).then(function (r) { if (r.error) throw r.error; });
+    } else {
+      // Primer ingreso o cambio voluntario: lo resuelve el servidor (el voluntario exige la contraseña actual).
+      guardado = (datosTerminos ? sb.auth.updateUser({ data: datosTerminos }).then(function (r) { if (r.error) throw r.error; }) : Promise.resolve())
+        .then(function () { return cuentas('cambiar_mi_clave', form.actual ? { clave: a, clave_actual: actual } : { clave: a }); });
+    }
+    guardado
       .then(function () { volverAlIngreso('Contraseña guardada. Entra con tu nueva contraseña.'); })
       .catch(function (e) {
         if (/sesi[oó]n venci|session/i.test(e.message || '')) return volverAlIngreso('Tu sesión terminó. Si ya guardaste tu contraseña nueva, entra con ella.');
         boton.disabled = false; boton.textContent = 'Guardar'; fallar(e.message || 'No se pudo guardar.');
       });
+  }
+
+  /* ---------- invitación: crear la contraseña con un enlace de un solo uso (/invitacion?t=...) ---------- */
+
+  /* Llama a la función pública ruta-invitacion (no necesita sesión; solo la clave pública de la app). */
+  function invitacion(accion, datosPedido) {
+    var base = String(CFG.SUPABASE_URL).trim().replace(/\/(rest|auth)\/v1\/?$/, '').replace(/\/+$/, '');
+    return fetch(base + '/functions/v1/ruta-invitacion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: CFG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + CFG.SUPABASE_ANON_KEY },
+      body: JSON.stringify(Object.assign({ accion: accion, token: INVITACION.token }, datosPedido || {}))
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || (j && j.error)) throw new Error(j && j.error ? j.error : 'No se pudo completar. Inténtalo otra vez.');
+        return j;
+      });
+    }, function () { throw new Error('No hay conexión. Revisa tu internet e inténtalo otra vez.'); });
+  }
+  function pintarInvitacion() {
+    var invalido = function (txt) {
+      $('#vista-pagina').innerHTML = '<div class="ficha"><p class="rotulo">Enlace de invitación</p><h1 class="ficha-titulo" id="t-pagina" tabindex="-1">El enlace no es válido o ya caducó</h1>' +
+        '<p class="ubic-texto">' + esc(txt || 'Los enlaces sirven una sola vez y duran 48 horas. Pide uno nuevo a quien te lo envió.') + '</p></div>';
+      mostrar('pagina'); var t = $('#t-pagina'); if (t) t.focus();
+    };
+    if (DEMO || !INVITACION.token) return invalido();
+    mostrar('carga');
+    invitacion('estado').then(function (r) {
+      if (!r.valido) return invalido();
+      $('#vista-pagina').innerHTML = '<div class="ficha"><p class="rotulo">Primer ingreso</p>' +
+        '<h1 class="ficha-titulo" id="t-pagina" tabindex="-1">Crea tu contraseña</h1>' +
+        '<p class="ubic-texto">Elige una contraseña para entrar a Nivo Ruta. Nadie más la conocerá.</p>' +
+        '<form class="formulario" id="form-invitacion" novalidate>' +
+        campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="8" maxlength="72" autocomplete="new-password"', 'Mínimo 8 caracteres.') +
+        campo('k2', 'Repite la nueva contraseña', '', 'password', 'required maxlength="72" autocomplete="new-password"') +
+        '<p class="ayuda">Al continuar aceptas los <a href="/terminos" target="_blank" rel="noopener">Términos</a> y la <a href="/privacidad" target="_blank" rel="noopener">Política de privacidad</a>.</p>' +
+        '<p class="error" id="error-invitacion" role="alert" hidden></p>' +
+        '<button type="submit" class="btn btn-acento">Guardar contraseña</button></form></div>';
+      mostrar('pagina'); var t = $('#t-pagina'); if (t) t.focus();
+    }).catch(function (e) { invalido(e.message); });
+  }
+  function guardarInvitacion(form) {
+    var a = form.k1.value, b = form.k2.value, error = $('#error-invitacion'), boton = $('button[type="submit"]', form);
+    var fallar = function (m) { error.textContent = m; error.hidden = false; };
+    if (a.length < 8) return fallar('Usa al menos 8 caracteres.');
+    if (a !== b) return fallar('Las dos contraseñas no coinciden.');
+    error.hidden = true; boton.disabled = true; boton.textContent = 'Guardando…';
+    invitacion('redimir', { clave: a }).then(function () {
+      var destino = INVITACION.destino ? '/' + INVITACION.destino : '/panel';
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}  // quita el token de la dirección
+      $('#vista-pagina').innerHTML = '<div class="ficha"><p class="rotulo">Listo</p><h1 class="ficha-titulo" id="t-pagina" tabindex="-1">Tu contraseña quedó creada</h1>' +
+        '<p class="ubic-texto">Tu contraseña quedó creada. Ya puedes ingresar.</p><a class="btn btn-acento" href="' + esc(destino) + '">Ir a ingresar</a></div>';
+      var t = $('#t-pagina'); if (t) t.focus();
+    }).catch(function (e) { boton.disabled = false; boton.textContent = 'Guardar contraseña'; fallar(e.message || 'No se pudo guardar.'); });
   }
 
   /* ---------- administrador: hoy ---------- */
@@ -1382,7 +1452,7 @@
       '<div class="dos">' + campo('n1', 'Primer nombre', '', 'text', 'maxlength="40" autocomplete="off" data-previo="1"') + campo('n2', 'Segundo nombre (opcional)', '', 'text', 'maxlength="40" autocomplete="off" data-previo="1"') +
       campo('a1', 'Primer apellido', '', 'text', 'maxlength="40" autocomplete="off" data-previo="1"') + campo('a2', 'Segundo apellido (opcional)', '', 'text', 'maxlength="40" autocomplete="off" data-previo="1"') + '</div>' +
       '<div class="previo"><p class="rotulo">Su usuario será</p><p class="previo-usuario" id="usuario-previo">—</p><p class="ayuda">Si ya existe, se agrega un punto o un número.</p></div>' +
-      campo('clave', 'Contraseña temporal', claveTemporal(), 'text', 'maxlength="72" autocomplete="off"', 'La cambiará en su primer ingreso.') +
+      '<p class="ayuda">Al crearlo recibirás un enlace para que elija su propia contraseña.</p>' +
       '<p class="error" id="error-persona" role="alert" hidden></p><button type="submit" class="btn btn-acento">Crear transportista</button></form></aside></div></div>';
     $('#vista-pagina').innerHTML = html;
   }
@@ -1395,13 +1465,13 @@
   function pintarGeneral(ruta, extra) {
     var g = estado.general, html = '<div class="pagina-in">', credAqui = estado.cred && estado.cred.vista === ruta ? estado.cred.html : '';
     if (ruta === 'nueva') {
-      var n = g.nueva || (g.nueva = { tinta: '#10231C', acento: '#D7F25A', logo: null, clave: claveTemporal(), slugTocado: false });
+      var n = g.nueva || (g.nueva = { tinta: '#10231C', acento: '#D7F25A', logo: null, slugTocado: false });
       html += '<h1 class="ficha-titulo" id="t-pagina" tabindex="-1">Nueva empresa</h1><div class="columnas"><form class="col-ancha tarjeta formulario" id="form-empresa" novalidate>' +
         '<div class="dos">' + campo('negocio', 'Nombre de la empresa', '', 'text', 'maxlength="80" required data-empresa="nombre"') +
         campo('slug', 'Enlace', '', 'text', 'maxlength="40" autocapitalize="none" spellcheck="false" data-empresa="slug"', 'Se arma solo con el nombre; puedes cambiarlo.') +
         campo('nombre', 'Nombre del administrador', '', 'text', 'maxlength="80" autocomplete="off"') +
         campo('correo', 'Correo del administrador', '', 'email', 'maxlength="120" autocomplete="off"') + '</div>' +
-        campo('clave', 'Contraseña temporal', n.clave, 'text', 'maxlength="72" autocomplete="off"', 'La cambiará en su primer ingreso. Si su correo ya tiene cuenta en otra microapp, no se usa: sigue con su contraseña de siempre.') +
+        '<p class="ayuda">Al crear la empresa recibirás un enlace para que el administrador elija su contraseña. Si su correo ya tiene cuenta en otra microapp, no hace falta: sigue con su contraseña de siempre.</p>' +
         '<div class="ubic-botones"><div class="campo"><label for="e-logo">Logo (PNG o JPG, opcional)</label><input id="e-logo" type="file" accept="image/png,image/jpeg,image/webp"></div>' +
         '<div class="campo"><label for="e-tinta">Color principal</label><input class="color" id="e-tinta" type="color" value="' + esc(n.tinta) + '" data-empresa="tinta"></div>' +
         '<div class="campo"><label for="e-acento">Color de acento</label><input class="color" id="e-acento" type="color" value="' + esc(n.acento) + '" data-empresa="acento"></div></div>' +
@@ -1416,7 +1486,7 @@
           (a.cuenta && a.correo !== String(estado.usuario.email || '').toLowerCase() ? '<button type="button" class="btn btn-linea" data-accion="admin-clave" data-correo="' + esc(a.correo) + '">Restablecer clave</button>' : '') + '</li>';
       }).join('') + '</ul>';
       html += '</section><aside class="col-lateral"><form class="tarjeta formulario" id="form-admin" novalidate><h2>Agregar administrador</h2>' +
-        campo('correo', 'Correo', '', 'email', 'autocomplete="off"') + campo('clave', 'Contraseña temporal', claveTemporal(), 'text', 'autocomplete="off"', 'Solo se usa si ese correo aún no tiene cuenta.') +
+        campo('correo', 'Correo', '', 'email', 'autocomplete="off"') + '<p class="ayuda">Si ese correo aún no tiene cuenta, recibirás un enlace para que elija su contraseña.</p>' +
         '<p class="error" id="error-admin" role="alert" hidden></p><button type="submit" class="btn btn-fuerte">Agregar</button></form></aside></div>';
     } else if (ruta === 'empresa') {
       var d = g.detalle;
@@ -1682,28 +1752,28 @@
       return true;
     }
     if (accion === 'nueva-clave') {
-      var nueva = claveTemporal(), usuario = el.getAttribute('data-usuario');
+      var usuario = el.getAttribute('data-usuario');
       el.disabled = true;
-      cuentas('cambiar_clave', { negocio_id: estado.emp.negocio_id, usuario_id: id, clave: nueva }).then(function () {
-        estado.cred = { vista: 'equipo', html: credencial('Nueva contraseña para ' + usuario, [['Enlace', enlaceDe(estado.emp.slug)], ['Usuario', usuario], ['Contraseña temporal', nueva]]) };
+      cuentas('cambiar_clave', { negocio_id: estado.emp.negocio_id, usuario_id: id }).then(function (r) {
+        estado.cred = { vista: 'equipo', html: credencial('Nueva contraseña para ' + usuario, [['Ingresa en', enlaceDe(estado.emp.slug)], ['Usuario', usuario]], r.token, null, estado.emp.slug) };
         return cargarEquipo();
       }).then(function () { pintarEquipo(); }).catch(function (e) { el.disabled = false; avisar(e.message); });
       return true;
     }
     if (accion === 'dueno-clave') {
-      var nd = claveTemporal(), correoD = el.getAttribute('data-correo'), slugD = el.getAttribute('data-slug');
+      var correoD = el.getAttribute('data-correo'), slugD = el.getAttribute('data-slug');
       el.disabled = true;
-      cuentas('restablecer_dueno', { negocio_id: id, clave: nd }).then(function () {
-        estado.cred = { vista: 'empresas', html: credencial('Nueva contraseña del administrador', [['Enlace', enlaceDe(slugD)], ['Correo', correoD], ['Contraseña temporal', nd]]) };
+      cuentas('restablecer_dueno', { negocio_id: id }).then(function (r) {
+        estado.cred = { vista: 'empresas', html: credencial('Nueva contraseña del administrador', [['Ingresa en', enlaceDe(slugD)], ['Correo', correoD]], r.token, null, slugD) };
         pintarGeneral('empresas'); window.scrollTo(0, 0);
       }).catch(function (e) { el.disabled = false; avisar(e.message); });
       return true;
     }
     if (accion === 'admin-clave') {
-      var na = claveTemporal(), correoA = el.getAttribute('data-correo');
+      var correoA = el.getAttribute('data-correo');
       el.disabled = true;
-      cuentas('restablecer_superadmin', { correo: correoA, clave: na }).then(function () {
-        estado.cred = { vista: 'admins', html: credencial('Nueva contraseña de administrador', [['Panel', location.origin + '/panel'], ['Correo', correoA], ['Contraseña temporal', na]]) };
+      cuentas('restablecer_superadmin', { correo: correoA }).then(function (r) {
+        estado.cred = { vista: 'admins', html: credencial('Nueva contraseña de administrador', [['Ingresa en', location.origin + '/panel'], ['Correo', correoA]], r.token) };
         pintarGeneral('admins');
       }).catch(function (e) { el.disabled = false; avisar(e.message); });
       return true;
@@ -1715,14 +1785,13 @@
     var boton = $('button[type="submit"]', form);
     var fallar = function (sel, m) { var e = $(sel); e.textContent = m; e.hidden = false; boton.disabled = false; };
     if (form.id === 'form-clave') { guardarClave(form); return true; }
+    if (form.id === 'form-invitacion') { guardarInvitacion(form); return true; }
     if (form.id === 'form-persona') {
       if (!form.n1.value.trim() || soloLetras(form.a1.value).length < 2) return fallar('#error-persona', 'Escribe al menos el primer nombre y el primer apellido.'), true;
-      if (form.clave.value.length < 8) return fallar('#error-persona', 'La contraseña temporal debe tener al menos 8 caracteres.'), true;
       boton.disabled = true;
-      var claveP = form.clave.value;
-      cuentas('crear_transportista', { negocio_id: estado.emp.negocio_id, n1: form.n1.value, n2: form.n2.value, a1: form.a1.value, a2: form.a2.value, clave: claveP })
+      cuentas('crear_transportista', { negocio_id: estado.emp.negocio_id, n1: form.n1.value, n2: form.n2.value, a1: form.a1.value, a2: form.a2.value })
         .then(function (r) {
-          estado.cred = { vista: 'equipo', html: credencial('Transportista creado: ' + r.nombre, [['Enlace', enlaceDe(estado.emp.slug)], ['Usuario', r.usuario], ['Contraseña temporal', claveP]]) };
+          estado.cred = { vista: 'equipo', html: credencial('Transportista creado: ' + r.nombre, [['Ingresa en', enlaceDe(estado.emp.slug)], ['Usuario', r.usuario]], r.token, null, estado.emp.slug) };
           return cargarEquipo();
         }).then(function () { pintarEquipo(); }).catch(function (e) { fallar('#error-persona', e.message); });
       return true;
@@ -1731,12 +1800,12 @@
       var n = estado.general.nueva;
       if (contraste(n.tinta, '#FFFFFF') < 4.5) return fallar('#error-empresa', 'El color principal es muy claro: elige uno más oscuro.'), true;
       boton.disabled = true;
-      var nombreE = form.negocio.value.trim(), claveE = form.clave.value;
-      cuentas('crear_empresa', { negocio: nombreE, slug: form.slug.value, nombre: form.nombre.value, correo: form.correo.value.trim().toLowerCase(), clave: claveE, tinta: n.tinta, acento: n.acento, logo: n.logo })
+      var nombreE = form.negocio.value.trim();
+      cuentas('crear_empresa', { negocio: nombreE, slug: form.slug.value, nombre: form.nombre.value, correo: form.correo.value.trim().toLowerCase(), tinta: n.tinta, acento: n.acento, logo: n.logo })
         .then(function (r) {
           estado.cred = { vista: 'empresas', html: r.existente
-            ? credencial(nombreE + ' creada', [['Enlace', enlaceDe(r.slug)], ['Correo', r.correo], ['Contraseña', 'la misma que ya usa en sus otras apps']], 'Esta persona ya tenía cuenta en otra microapp: entra con su misma contraseña de siempre.')
-            : credencial(nombreE + ' creada', [['Enlace', enlaceDe(r.slug)], ['Correo', r.correo], ['Contraseña temporal', claveE]]) };
+            ? credencial(nombreE + ' creada', [['Enlace', enlaceDe(r.slug)], ['Correo', r.correo], ['Contraseña', 'la misma que ya usa en sus otras apps']], null, 'Esta persona ya tenía cuenta en otra microapp: entra con su misma contraseña de siempre.')
+            : credencial(nombreE + ' creada', [['Ingresa en', enlaceDe(r.slug)], ['Correo', r.correo]], r.token, null, r.slug) };
           estado.general.nueva = null; estado.general.empresas = null; location.hash = '#/empresas';
         }).catch(function (e) { fallar('#error-empresa', e.message); });
       return true;
@@ -1753,10 +1822,9 @@
     }
     if (form.id === 'form-admin') {
       boton.disabled = true;
-      var claveA = form.clave.value;
-      cuentas('crear_superadmin', { correo: form.correo.value, clave: claveA }).then(function (r) {
+      cuentas('crear_superadmin', { correo: form.correo.value }).then(function (r) {
         estado.cred = { vista: 'admins', html: r.existente ? '<p class="cred">' + esc(r.correo) + ' ya tenía cuenta: ahora también es administrador general.</p>'
-          : credencial('Administrador agregado', [['Panel', location.origin + '/panel'], ['Correo', r.correo], ['Contraseña temporal', claveA]]) };
+          : credencial('Administrador agregado', [['Ingresa en', location.origin + '/panel'], ['Correo', r.correo]], r.token) };
         estado.general.admins = null; pintarGeneral('admins'); return cargarGeneral('admins');
       }).catch(function (e) { fallar('#error-admin', e.message); });
       return true;
@@ -1884,6 +1952,7 @@
       var aviso = sessionStorage.getItem('ruta.aviso-ingreso');
       if (aviso) { sessionStorage.removeItem('ruta.aviso-ingreso'); setTimeout(function () { avisar(aviso); }, 400); }
     } catch (e) {}
+    if (INVITACION) { pintarInvitacion(); return; }  // antes del ingreso normal y de tratar la ruta como empresa
     if (DEMO) {
       $('#aviso-demo').hidden = false;
       entrar({ id: 'demo', email: '' });
