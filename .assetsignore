@@ -8,3 +8,5 @@ wrangler.jsonc
 worker.js
 api
 .github
+.git
+.wrangler
