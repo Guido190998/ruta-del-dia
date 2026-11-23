@@ -27,6 +27,7 @@ export default {
     const url = new URL(request.url);
     const ruta = url.pathname;
     let res;
+    let shell = ruta === "/app"; // shell de la app (login/panel de empresas): no se indexa
     const funcion = API[ruta];
     if (funcion) {
       res = await comoVercel(funcion, request, env);
@@ -35,9 +36,12 @@ export default {
       if (res.status === 404) {
         const destino = buscar(DESPUES, ruta);
         res = destino ? await servir(env, request, destino) : await noEncontrado(env, request);
+        if (destino) shell = true;
       }
     }
-    return conCabeceras(res, ruta);
+    res = conCabeceras(res, ruta);
+    if (shell) res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
   },
 };
 

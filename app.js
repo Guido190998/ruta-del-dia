@@ -1285,7 +1285,7 @@
         : 'Elige tu nueva contraseña. Después volverás a entrar con ella.') + '</p>' +
       '<form class="formulario" id="form-clave" novalidate>' +
       (pideActual ? campo('actual', 'Contraseña actual', '', 'password', 'required maxlength="72" autocomplete="current-password"') : '') +
-      campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="8" maxlength="72" autocomplete="new-password"', 'Mínimo 8 caracteres.') +
+      campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="12" maxlength="72" autocomplete="new-password"', 'Mínimo 12 caracteres.') +
       campo('k2', 'Repite la nueva contraseña', '', 'password', 'required maxlength="72" autocomplete="new-password"') +
       (terminos ? '<label class="acepto"><input type="checkbox" name="acepto"><span>Soy mayor de 18 años y acepto los <a href="/terminos" target="_blank" rel="noopener">Términos</a> y la <a href="/privacidad" target="_blank" rel="noopener">Política de privacidad</a>.</span></label>' : '') +
       '<p class="error" id="error-clave" role="alert" hidden></p>' +
@@ -1299,7 +1299,7 @@
     var fallar = function (m) { error.textContent = m; error.hidden = false; };
     var actual = form.actual ? form.actual.value : '';
     if (form.actual && !actual) return fallar('Escribe tu contraseña actual.');
-    if (a.length < 8) return fallar('Usa al menos 8 caracteres.');
+    if (a.length < 12) return fallar('Usa al menos 12 caracteres.');
     if (a !== b) return fallar('Las dos contraseñas no coinciden.');
     if (form.acepto && !form.acepto.checked) return fallar('Para continuar debes aceptar los Términos y la Política de privacidad.');
     error.hidden = true; boton.disabled = true; boton.textContent = 'Guardando…';
@@ -1352,7 +1352,7 @@
         '<h1 class="ficha-titulo" id="t-pagina" tabindex="-1">Crea tu contraseña</h1>' +
         '<p class="ubic-texto">Elige una contraseña para entrar a Nivo Ruta. Nadie más la conocerá.</p>' +
         '<form class="formulario" id="form-invitacion" novalidate>' +
-        campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="8" maxlength="72" autocomplete="new-password"', 'Mínimo 8 caracteres.') +
+        campo('k1', 'Nueva contraseña', '', 'password', 'required minlength="12" maxlength="72" autocomplete="new-password"', 'Mínimo 12 caracteres.') +
         campo('k2', 'Repite la nueva contraseña', '', 'password', 'required maxlength="72" autocomplete="new-password"') +
         '<p class="ayuda">Al continuar aceptas los <a href="/terminos" target="_blank" rel="noopener">Términos</a> y la <a href="/privacidad" target="_blank" rel="noopener">Política de privacidad</a>.</p>' +
         '<p class="error" id="error-invitacion" role="alert" hidden></p>' +
@@ -1363,7 +1363,7 @@
   function guardarInvitacion(form) {
     var a = form.k1.value, b = form.k2.value, error = $('#error-invitacion'), boton = $('button[type="submit"]', form);
     var fallar = function (m) { error.textContent = m; error.hidden = false; };
-    if (a.length < 8) return fallar('Usa al menos 8 caracteres.');
+    if (a.length < 12) return fallar('Usa al menos 12 caracteres.');
     if (a !== b) return fallar('Las dos contraseñas no coinciden.');
     error.hidden = true; boton.disabled = true; boton.textContent = 'Guardando…';
     invitacion('redimir', { clave: a }).then(function () {
